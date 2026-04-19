@@ -1,0 +1,12 @@
+{
+  "name": "scioly-timeline",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build:css": "sass styles.scss styles.css --no-source-map",
+    "watch:css": "sass --watch styles.scss:styles.css --no-source-map"
+  },
+  "devDependencies": {
+    "sass": "^1.93.2"
+  }
+}

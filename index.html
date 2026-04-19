@@ -8,26 +8,24 @@
 </head>
 <body>
   <main class="page">
-    <header class="hero">
-      <section class="upload-panel card">
-        <label class="dropzone" id="dropzone" for="file-input">
-          <input id="file-input" type="file" multiple accept=".yaml,.yml,.json,.txt" />
-          <span class="dropzone-title">Choose SciolyFF files</span>
-          <span class="dropzone-subtitle">or drag files here</span>
-        </label>
+    <section class="upload-panel card">
+      <label class="dropzone" id="dropzone" for="file-input">
+        <input id="file-input" type="file" multiple accept=".yaml,.yml,.json,.txt" />
+        <span class="dropzone-title">Choose SciolyFF files</span>
+        <span class="dropzone-subtitle">or drag files here</span>
+      </label>
 
-        <div class="upload-meta">
-          <div>
-            <span class="meta-label">Loaded files</span>
-            <strong id="file-count">0</strong>
-          </div>
-          <div>
-            <span class="meta-label">Status</span>
-            <strong id="status-text">Waiting for upload</strong>
-          </div>
+      <div class="upload-meta">
+        <div>
+          <span class="meta-label">Loaded files</span>
+          <strong id="file-count">0</strong>
         </div>
-      </section>
-    </header>
+        <div>
+          <span class="meta-label">Status</span>
+          <strong id="status-text">Waiting for upload</strong>
+        </div>
+      </div>
+    </section>
 
     <section class="card controls">
       <div class="section-heading">
@@ -41,6 +39,14 @@
         <label><input type="checkbox" id="toggle-number" /> Show team number</label>
         <label><input type="checkbox" id="toggle-advanced" checked /> Show advancement star</label>
         <label><input type="checkbox" id="toggle-top3" checked /> Highlight top 3 ranks</label>
+        <label><input type="checkbox" id="toggle-location" checked /> Show tournament location</label>
+        <label><input type="checkbox" id="toggle-date" checked /> Show tournament date</label>
+        <label><input type="checkbox" id="toggle-division" checked /> Show tournament division</label>
+        <label><input type="checkbox" id="toggle-level" checked /> Show tournament level</label>
+        <label class="text-input-label" for="team-name-max">
+          Team name character limit
+          <input id="team-name-max" type="number" min="8" max="120" step="1" value="28" />
+        </label>
       </div>
     </section>
 
@@ -51,21 +57,23 @@
     <article class="tournament card">
       <div class="tournament-header">
         <div>
-          <p class="tournament-kicker"></p>
           <h2 class="tournament-title"></h2>
+          <p class="tournament-meta"></p>
         </div>
-        <div class="tournament-badge"></div>
       </div>
 
-      <div class="tournament-summary"></div>
-
-      <div class="table-wrap">
-        <table class="results-table">
+      <div class="results-classic-wrapper">
+        <table class="results-classic">
+          <colgroup>
+            <col class="col-team" />
+            <col class="col-rank" />
+            <col class="col-points" />
+          </colgroup>
           <thead>
             <tr>
-              <th>Team Name</th>
-              <th class="col-rank">Rank</th>
-              <th class="col-points">Total Points</th>
+              <th class="team">Team Name</th>
+              <th class="rank">Rank</th>
+              <th class="total-points">Total Points</th>
             </tr>
           </thead>
           <tbody></tbody>

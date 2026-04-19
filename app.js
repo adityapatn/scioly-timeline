@@ -6,6 +6,11 @@ const state = {
     number: false,
     advanced: true,
     top3: true,
+    location: true,
+    date: true,
+    division: true,
+    level: true,
+    teamNameMax: 28,
   },
 };
 
@@ -14,7 +19,6 @@ const dropzone = document.getElementById("dropzone");
 const tableRoot = document.getElementById("tables");
 const fileCount = document.getElementById("file-count");
 const statusText = document.getElementById("status-text");
-const template = document.getElementById("tournament-template");
 
 const optionInputs = {
   city: document.getElementById("toggle-city"),
@@ -22,7 +26,12 @@ const optionInputs = {
   number: document.getElementById("toggle-number"),
   advanced: document.getElementById("toggle-advanced"),
   top3: document.getElementById("toggle-top3"),
+  location: document.getElementById("toggle-location"),
+  date: document.getElementById("toggle-date"),
+  division: document.getElementById("toggle-division"),
+  level: document.getElementById("toggle-level"),
 };
+const teamNameMaxInput = document.getElementById("team-name-max");
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
@@ -46,6 +55,12 @@ function updateOptionState() {
   Object.entries(optionInputs).forEach(([key, input]) => {
     state.options[key] = input.checked;
   });
+
+  const parsed = Number.parseInt(teamNameMaxInput.value, 10);
+  state.options.teamNameMax = Number.isFinite(parsed)
+    ? Math.min(120, Math.max(8, parsed))
+    : 28;
+  teamNameMaxInput.value = String(state.options.teamNameMax);
 }
 
 function bindControls() {
@@ -54,6 +69,11 @@ function bindControls() {
       updateOptionState();
       render();
     });
+  });
+
+  teamNameMaxInput.addEventListener("input", () => {
+    updateOptionState();
+    render();
   });
 }
 
@@ -75,16 +95,28 @@ function formatDate(value) {
   return Number.isNaN(date.getTime()) ? String(value) : dateFormatter.format(date);
 }
 
-function tournamentLabel(tournament, fileName) {
+function tournamentLabel(tournament) {
   return (
-    tournament.shortName ||
     tournament.name ||
-    fileName.replace(/\.[^.]+$/, "")
+    tournament.shortName ||
+    "Unnamed Tournament"
   );
 }
 
 function buildTeamName(team) {
-  return abbreviateHighSchool(team.school);
+  return abbreviateHighSchool(team.school || team.name || team.team || "Unknown team");
+}
+
+function truncateName(text, maxChars) {
+  if (!text || text.length <= maxChars) {
+    return text;
+  }
+
+  if (maxChars <= 3) {
+    return text.slice(0, maxChars);
+  }
+
+  return `${text.slice(0, maxChars - 3)}...`;
 }
 
 function abbreviateHighSchool(name) {
@@ -125,14 +157,31 @@ function buildTeamMeta(team) {
   return meta.join(" • ");
 }
 
-function getTournamentDetails(tournament) {
+function buildTournamentMeta(tournament) {
   const dateValue = tournament.date || tournament.startDate || tournament.endDate || tournament.awardsDate;
-  return [
-    tournament.location ? `Location: ${escapeHtml(tournament.location)}` : "Location: —",
-    `Date: ${escapeHtml(formatDate(dateValue))}`,
-    tournament.division ? `Division: ${escapeHtml(tournament.division)}` : "Division: —",
-    tournament.level ? `Level: ${escapeHtml(tournament.level)}` : "Level: —",
-  ].join(" • ");
+  const lines = [];
+
+  if (state.options.location) {
+    lines.push(`Location: ${tournament.location || "—"}`);
+  }
+
+  if (state.options.date) {
+    lines.push(`Date: ${formatDate(dateValue)}`);
+  }
+
+  if (state.options.division) {
+    lines.push(tournament.division ? `Division: ${tournament.division}` : "Division: —");
+  }
+
+  if (state.options.level) {
+    lines.push(tournament.level ? `Level: ${tournament.level}` : "Level: —");
+  }
+
+  if (!lines.length) {
+    lines.push("No tournament metadata selected");
+  }
+
+  return lines;
 }
 
 function escapeHtml(value) {
@@ -154,6 +203,29 @@ function getTournamentSortValue(tournament) {
   return Number.isNaN(date.getTime()) ? Number.POSITIVE_INFINITY : date.getTime();
 }
 
+function sortTournamentTeams(teams) {
+  return teams
+    .map((team, index) => ({ team, index }))
+    .sort((left, right) => {
+      const leftRank = Number(left.team.rank);
+      const rightRank = Number(right.team.rank);
+
+      if (Number.isFinite(leftRank) && Number.isFinite(rightRank) && leftRank !== rightRank) {
+        return leftRank - rightRank;
+      }
+
+      const leftPoints = Number(left.team.points);
+      const rightPoints = Number(right.team.points);
+
+      if (Number.isFinite(leftPoints) && Number.isFinite(rightPoints) && leftPoints !== rightPoints) {
+        return leftPoints - rightPoints;
+      }
+
+      return left.index - right.index;
+    })
+    .map((entry) => entry.team);
+}
+
 function render() {
   fileCount.textContent = String(state.files.length);
 
@@ -170,94 +242,106 @@ function render() {
     return getTournamentSortValue(left.tournament) - getTournamentSortValue(right.tournament);
   });
 
-  const table = document.createElement("table");
-  table.className = "results-table combined-table card";
-  const thead = document.createElement("thead");
-  const tbody = document.createElement("tbody");
+  const wrapper = document.createElement("div");
+  wrapper.className = "results-classic-wrapper combined-wrapper card";
 
-  const headerRow = document.createElement("tr");
+  const table = document.createElement("table");
+  table.className = "results-classic combined-results";
+
+  const thead = document.createElement("thead");
+  const titleRow = document.createElement("tr");
   sortedEntries.forEach((entry) => {
-    const tournament = entry.tournament;
     const th = document.createElement("th");
     th.colSpan = 3;
     th.className = "tournament-group-header";
+    const metaLines = buildTournamentMeta(entry.tournament)
+      .map((line) => `<span>${escapeHtml(line)}</span>`)
+      .join("");
     th.innerHTML = `
-      <div class="tournament-title-line">${escapeHtml(tournamentLabel(tournament, entry.fileName))}</div>
-      <div class="tournament-meta-line">${escapeHtml(getTournamentDetails(tournament))}</div>
+      <div class="tournament-title">${escapeHtml(tournamentLabel(entry.tournament))}</div>
+      <div class="tournament-meta">${metaLines}</div>
     `;
-    headerRow.appendChild(th);
+    titleRow.appendChild(th);
   });
-  thead.appendChild(headerRow);
+  thead.appendChild(titleRow);
 
   const columnRow = document.createElement("tr");
+  columnRow.className = "column-header-row";
   sortedEntries.forEach(() => {
-    ["Team Name", "Rank", "Total Points"].forEach((label, index) => {
-      const th = document.createElement("th");
-      th.textContent = label;
-      th.className = index === 0 ? "col-team" : index === 1 ? "col-rank" : "col-points";
-      columnRow.appendChild(th);
-    });
+    const teamHeader = document.createElement("th");
+    teamHeader.className = "team";
+    teamHeader.textContent = "Team Name";
+
+    const rankHeader = document.createElement("th");
+    rankHeader.className = "rank";
+    rankHeader.textContent = "Rank";
+
+    const pointsHeader = document.createElement("th");
+    pointsHeader.className = "total-points";
+    pointsHeader.textContent = "Points";
+
+    columnRow.appendChild(teamHeader);
+    columnRow.appendChild(rankHeader);
+    columnRow.appendChild(pointsHeader);
   });
   thead.appendChild(columnRow);
 
-  const maxRows = 20;
-  for (let rowIndex = 0; rowIndex < maxRows; rowIndex += 1) {
+  const tbody = document.createElement("tbody");
+  for (let rowIndex = 0; rowIndex < 20; rowIndex += 1) {
     const tr = document.createElement("tr");
+
     sortedEntries.forEach((entry) => {
-      const tournament = entry.tournament;
-      const teams = (tournament.teams ?? []).slice(0, 20);
+      const teams = sortTournamentTeams((entry.tournament.teams ?? []).slice()).slice(0, 20);
       const team = teams[rowIndex];
 
       if (!team) {
-        ["team-cell", "rank-cell", "points-cell"].forEach((className, columnIndex) => {
+        ["team", "rank", "total-points"].forEach((className) => {
           const emptyCell = document.createElement("td");
           emptyCell.className = `${className} empty-row`;
-          emptyCell.textContent = columnIndex === 0 ? "No more teams" : "";
+          emptyCell.textContent = "—";
           tr.appendChild(emptyCell);
         });
         return;
       }
 
-      const rank = team.rank ?? rowIndex + 1;
-      const rowClasses = [
-        rank <= 3 && state.options.top3 ? `rank-${rank}` : "",
-        rank <= 3 && state.options.top3 ? "top-3" : "",
-      ].filter(Boolean).join(" ");
-
-      const teamMeta = buildTeamMeta(team);
-      const star = state.options.advanced && team.earnedBid ? " ✧" : "";
-
-      if (rowClasses) {
-        tr.className = rowClasses;
-      }
+      const rank = Number.isFinite(Number(team.rank)) ? Number(team.rank) : rowIndex + 1;
 
       const teamCell = document.createElement("td");
-      teamCell.className = "team-cell";
+      teamCell.className = "team";
+      const teamMeta = buildTeamMeta(team);
+      const star = state.options.advanced && team.earnedBid ? " ✧" : "";
+      const fullTeamName = buildTeamName(team);
+      const visibleTeamName = truncateName(fullTeamName, state.options.teamNameMax);
       teamCell.innerHTML = `
-        <div class="team-primary">
-          <span class="team-name">${escapeHtml(buildTeamName(team) + star)}</span>
-        </div>
-        ${teamMeta ? `<div class="team-meta">${escapeHtml(teamMeta)}</div>` : ""}
+        <span class="team-primary">
+          <span class="team-name" title="${escapeHtml(fullTeamName)}">${escapeHtml(visibleTeamName + star)}</span>
+        </span>
+        ${teamMeta ? `<span class="team-meta">${escapeHtml(teamMeta)}</span>` : ""}
       `;
 
       const rankCell = document.createElement("td");
-      rankCell.className = "rank-cell";
-      rankCell.textContent = String(rank);
+      rankCell.className = "rank";
+      if (state.options.top3 && rank >= 1 && rank <= 3) {
+        rankCell.setAttribute("data-trophy", String(rank));
+      }
+      rankCell.innerHTML = `<div>${escapeHtml(String(rank))}</div>`;
 
       const pointsCell = document.createElement("td");
-      pointsCell.className = "points-cell";
-      pointsCell.textContent = team.points ?? "—";
+      pointsCell.className = "total-points";
+      pointsCell.innerHTML = `<div>${escapeHtml(String(team.points ?? "—"))}</div>`;
 
       tr.appendChild(teamCell);
       tr.appendChild(rankCell);
       tr.appendChild(pointsCell);
     });
+
     tbody.appendChild(tr);
   }
 
   table.appendChild(thead);
   table.appendChild(tbody);
-  tableRoot.appendChild(table);
+  wrapper.appendChild(table);
+  tableRoot.appendChild(wrapper);
 }
 
 async function handleFiles(fileList) {
