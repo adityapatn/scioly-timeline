@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SciolyFF Tournament Tables</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">SciolyFF results viewer</p>
+        <h1>Upload multiple SciolyFF files and compare tournament results side by side.</h1>
+        <p class="lede">
+          Each uploaded .yaml file becomes a separate top-20 tournament table with rank,
+          team name, total points, and a star for teams that advanced.
+        </p>
+      </div>
+
+      <section class="upload-panel card">
+        <label class="dropzone" id="dropzone" for="file-input">
+          <input id="file-input" type="file" multiple accept=".yaml,.yml,.json,.txt" />
+          <span class="dropzone-title">Choose SciolyFF files</span>
+          <span class="dropzone-subtitle">or drag files here</span>
+        </label>
+
+        <div class="upload-meta">
+          <div>
+            <span class="meta-label">Loaded files</span>
+            <strong id="file-count">0</strong>
+          </div>
+          <div>
+            <span class="meta-label">Status</span>
+            <strong id="status-text">Waiting for upload</strong>
+          </div>
+        </div>
+      </section>
+    </header>
+
+    <section class="card controls">
+      <div class="section-heading">
+        <h2>Display options</h2>
+        <p>Show or hide extra information in each tournament table.</p>
+      </div>
+
+      <div class="control-grid">
+        <label><input type="checkbox" id="toggle-location" checked /> Show tournament location</label>
+        <label><input type="checkbox" id="toggle-date" checked /> Show tournament date</label>
+        <label><input type="checkbox" id="toggle-division" checked /> Show division</label>
+        <label><input type="checkbox" id="toggle-level" checked /> Show level</label>
+        <label><input type="checkbox" id="toggle-state" /> Show team state</label>
+        <label><input type="checkbox" id="toggle-suffix" /> Show team suffix</label>
+        <label><input type="checkbox" id="toggle-number" /> Show team number</label>
+        <label><input type="checkbox" id="toggle-advanced" checked /> Show advancement star</label>
+        <label><input type="checkbox" id="toggle-top3" checked /> Highlight top 3 ranks</label>
+        <label><input type="checkbox" id="toggle-summary" checked /> Show table summary</label>
+      </div>
+    </section>
+
+    <section id="tables" class="tables" aria-live="polite"></section>
+  </main>
+
+  <template id="tournament-template">
+    <article class="tournament card">
+      <div class="tournament-header">
+        <div>
+          <p class="tournament-kicker"></p>
+          <h2 class="tournament-title"></h2>
+        </div>
+        <div class="tournament-badge"></div>
+      </div>
+
+      <div class="tournament-summary"></div>
+
+      <div class="table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th class="col-rank">Rank</th>
+              <th>Team</th>
+              <th class="col-points">Total Points</th>
+              <th class="col-star">*</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+  </template>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
