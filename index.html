@@ -9,15 +9,6 @@
 <body>
   <main class="page">
     <header class="hero">
-      <div>
-        <p class="eyebrow">SciolyFF results viewer</p>
-        <h1>Upload multiple SciolyFF files and compare tournament results side by side.</h1>
-        <p class="lede">
-          Each uploaded .yaml file becomes a separate top-20 tournament table with rank,
-          team name, total points, and a star for teams that advanced.
-        </p>
-      </div>
-
       <section class="upload-panel card">
         <label class="dropzone" id="dropzone" for="file-input">
           <input id="file-input" type="file" multiple accept=".yaml,.yml,.json,.txt" />
@@ -45,16 +36,11 @@
       </div>
 
       <div class="control-grid">
-        <label><input type="checkbox" id="toggle-location" checked /> Show tournament location</label>
-        <label><input type="checkbox" id="toggle-date" checked /> Show tournament date</label>
-        <label><input type="checkbox" id="toggle-division" checked /> Show division</label>
-        <label><input type="checkbox" id="toggle-level" checked /> Show level</label>
+        <label><input type="checkbox" id="toggle-city" /> Show team city</label>
         <label><input type="checkbox" id="toggle-state" /> Show team state</label>
-        <label><input type="checkbox" id="toggle-suffix" /> Show team suffix</label>
         <label><input type="checkbox" id="toggle-number" /> Show team number</label>
         <label><input type="checkbox" id="toggle-advanced" checked /> Show advancement star</label>
         <label><input type="checkbox" id="toggle-top3" checked /> Highlight top 3 ranks</label>
-        <label><input type="checkbox" id="toggle-summary" checked /> Show table summary</label>
       </div>
     </section>
 
@@ -77,10 +63,9 @@
         <table class="results-table">
           <thead>
             <tr>
+              <th>Team Name</th>
               <th class="col-rank">Rank</th>
-              <th>Team</th>
               <th class="col-points">Total Points</th>
-              <th class="col-star">*</th>
             </tr>
           </thead>
           <tbody></tbody>

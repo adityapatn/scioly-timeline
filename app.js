@@ -1,16 +1,11 @@
 const state = {
   files: [],
   options: {
-    location: true,
-    date: true,
-    division: true,
-    level: true,
+    city: false,
     state: false,
-    suffix: false,
     number: false,
     advanced: true,
     top3: true,
-    summary: true,
   },
 };
 
@@ -22,16 +17,11 @@ const statusText = document.getElementById("status-text");
 const template = document.getElementById("tournament-template");
 
 const optionInputs = {
-  location: document.getElementById("toggle-location"),
-  date: document.getElementById("toggle-date"),
-  division: document.getElementById("toggle-division"),
-  level: document.getElementById("toggle-level"),
+  city: document.getElementById("toggle-city"),
   state: document.getElementById("toggle-state"),
-  suffix: document.getElementById("toggle-suffix"),
   number: document.getElementById("toggle-number"),
   advanced: document.getElementById("toggle-advanced"),
   top3: document.getElementById("toggle-top3"),
-  summary: document.getElementById("toggle-summary"),
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -94,20 +84,37 @@ function tournamentLabel(tournament, fileName) {
 }
 
 function buildTeamName(team) {
-  const parts = [team.school];
-  if (team.suffix) {
-    parts.push(team.suffix);
+  return abbreviateHighSchool(team.school);
+}
+
+function abbreviateHighSchool(name) {
+  return String(name).replace(/\bHigh School\b/gi, "H.S.");
+}
+
+function buildTeamLocation(team) {
+  if (state.options.city && state.options.state && team.city && team.state) {
+    return `${team.city}, ${team.state}`;
   }
-  return parts.join(" ");
+
+  if (state.options.city && team.city) {
+    return team.city;
+  }
+
+  if (state.options.state && team.state) {
+    return team.state;
+  }
+
+  return "";
 }
 
 function buildTeamMeta(team) {
   const meta = [];
+  const location = buildTeamLocation(team);
+  if (location) {
+    meta.push(location);
+  }
   if (state.options.number) {
     meta.push(`#${team.number}`);
-  }
-  if (state.options.state && team.state) {
-    meta.push(team.state);
   }
   if (team.exhibition) {
     meta.push("Exhibition");
@@ -119,22 +126,13 @@ function buildTeamMeta(team) {
 }
 
 function getTournamentDetails(tournament) {
-  const details = [];
-  if (state.options.location && tournament.location) {
-    details.push(`<div><strong>Location:</strong> ${escapeHtml(tournament.location)}</div>`);
-  }
-  if (state.options.date) {
-    const dateValue = tournament.date || tournament.startDate || tournament.endDate || tournament.awardsDate;
-    details.push(`<div><strong>Date:</strong> ${formatDate(dateValue)}</div>`);
-  }
-  if (state.options.division && tournament.division) {
-    details.push(`<div><strong>Division:</strong> ${escapeHtml(tournament.division)}</div>`);
-  }
-  if (state.options.level && tournament.level) {
-    details.push(`<div><strong>Level:</strong> ${escapeHtml(tournament.level)}</div>`);
-  }
-
-  return details.join("");
+  const dateValue = tournament.date || tournament.startDate || tournament.endDate || tournament.awardsDate;
+  return [
+    tournament.location ? `Location: ${escapeHtml(tournament.location)}` : "Location: —",
+    `Date: ${escapeHtml(formatDate(dateValue))}`,
+    tournament.division ? `Division: ${escapeHtml(tournament.division)}` : "Division: —",
+    tournament.level ? `Level: ${escapeHtml(tournament.level)}` : "Level: —",
+  ].join(" • ");
 }
 
 function escapeHtml(value) {
@@ -150,6 +148,12 @@ function renderError(message) {
   tableRoot.innerHTML = `<div class="card upload-panel status-error">${escapeHtml(message)}</div>`;
 }
 
+function getTournamentSortValue(tournament) {
+  const dateValue = tournament.startDate || tournament.date || tournament.endDate || tournament.awardsDate;
+  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  return Number.isNaN(date.getTime()) ? Number.POSITIVE_INFINITY : date.getTime();
+}
+
 function render() {
   fileCount.textContent = String(state.files.length);
 
@@ -162,33 +166,56 @@ function render() {
   tableRoot.innerHTML = "";
   statusText.textContent = `${state.files.length} tournament${state.files.length === 1 ? "" : "s"} loaded`;
 
-  state.files.forEach((entry, index) => {
-    const clone = template.content.firstElementChild.cloneNode(true);
-    const kicker = clone.querySelector(".tournament-kicker");
-    const title = clone.querySelector(".tournament-title");
-    const badge = clone.querySelector(".tournament-badge");
-    const summary = clone.querySelector(".tournament-summary");
-    const tbody = clone.querySelector("tbody");
+  const sortedEntries = [...state.files].sort((left, right) => {
+    return getTournamentSortValue(left.tournament) - getTournamentSortValue(right.tournament);
+  });
 
+  const table = document.createElement("table");
+  table.className = "results-table combined-table card";
+  const thead = document.createElement("thead");
+  const tbody = document.createElement("tbody");
+
+  const headerRow = document.createElement("tr");
+  sortedEntries.forEach((entry) => {
     const tournament = entry.tournament;
-    const teams = (tournament.teams ?? []).slice(0, 20);
+    const th = document.createElement("th");
+    th.colSpan = 3;
+    th.className = "tournament-group-header";
+    th.innerHTML = `
+      <div class="tournament-title-line">${escapeHtml(tournamentLabel(tournament, entry.fileName))}</div>
+      <div class="tournament-meta-line">${escapeHtml(getTournamentDetails(tournament))}</div>
+    `;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
 
-    kicker.textContent = `Tournament ${index + 1}`;
-    title.textContent = tournamentLabel(tournament, entry.fileName);
-    badge.textContent = `${tournament.year ?? ""}`.trim() || "SciolyFF";
+  const columnRow = document.createElement("tr");
+  sortedEntries.forEach(() => {
+    ["Team Name", "Rank", "Total Points"].forEach((label, index) => {
+      const th = document.createElement("th");
+      th.textContent = label;
+      th.className = index === 0 ? "col-team" : index === 1 ? "col-rank" : "col-points";
+      columnRow.appendChild(th);
+    });
+  });
+  thead.appendChild(columnRow);
 
-    summary.innerHTML = state.options.summary ? getTournamentDetails(tournament) : "";
-
-    const rows = [];
-    for (let rowIndex = 0; rowIndex < 20; rowIndex += 1) {
+  const maxRows = 20;
+  for (let rowIndex = 0; rowIndex < maxRows; rowIndex += 1) {
+    const tr = document.createElement("tr");
+    sortedEntries.forEach((entry) => {
+      const tournament = entry.tournament;
+      const teams = (tournament.teams ?? []).slice(0, 20);
       const team = teams[rowIndex];
+
       if (!team) {
-        rows.push(`
-          <tr class="empty-row">
-            <td colspan="4">No more teams</td>
-          </tr>
-        `);
-        continue;
+        ["team-cell", "rank-cell", "points-cell"].forEach((className, columnIndex) => {
+          const emptyCell = document.createElement("td");
+          emptyCell.className = `${className} empty-row`;
+          emptyCell.textContent = columnIndex === 0 ? "No more teams" : "";
+          tr.appendChild(emptyCell);
+        });
+        return;
       }
 
       const rank = team.rank ?? rowIndex + 1;
@@ -198,26 +225,39 @@ function render() {
       ].filter(Boolean).join(" ");
 
       const teamMeta = buildTeamMeta(team);
-      const star = state.options.advanced && team.earnedBid ? "★" : "";
+      const star = state.options.advanced && team.earnedBid ? " ✧" : "";
 
-      rows.push(`
-        <tr class="${rowClasses}">
-          <td class="rank-cell">${escapeHtml(rank)}</td>
-          <td class="team-cell">
-            <div class="team-primary">
-              <span class="team-name">${escapeHtml(buildTeamName(team))}</span>
-            </div>
-            ${teamMeta ? `<div class="team-meta">${escapeHtml(teamMeta)}</div>` : ""}
-          </td>
-          <td class="points-cell">${team.points ?? "—"}</td>
-          <td class="star-cell">${star}</td>
-        </tr>
-      `);
-    }
+      if (rowClasses) {
+        tr.className = rowClasses;
+      }
 
-    tbody.innerHTML = rows.join("");
-    tableRoot.appendChild(clone);
-  });
+      const teamCell = document.createElement("td");
+      teamCell.className = "team-cell";
+      teamCell.innerHTML = `
+        <div class="team-primary">
+          <span class="team-name">${escapeHtml(buildTeamName(team) + star)}</span>
+        </div>
+        ${teamMeta ? `<div class="team-meta">${escapeHtml(teamMeta)}</div>` : ""}
+      `;
+
+      const rankCell = document.createElement("td");
+      rankCell.className = "rank-cell";
+      rankCell.textContent = String(rank);
+
+      const pointsCell = document.createElement("td");
+      pointsCell.className = "points-cell";
+      pointsCell.textContent = team.points ?? "—";
+
+      tr.appendChild(teamCell);
+      tr.appendChild(rankCell);
+      tr.appendChild(pointsCell);
+    });
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  tableRoot.appendChild(table);
 }
 
 async function handleFiles(fileList) {

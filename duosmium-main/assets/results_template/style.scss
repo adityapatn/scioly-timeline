@@ -1,0 +1,776 @@
+@import "../variables";
+
+@import "~daemonite-material/assets/scss/colors";
+@import "~daemonite-material/assets/scss/functions";
+@import "~daemonite-material/assets/scss/mixins";
+@import "~daemonite-material/assets/scss/variables";
+@import "~daemonite-material/assets/scss/utilities";
+
+// per-track medal/trophy styles
+x-st {
+  display: none;
+}
+
+div.results-classic-wrapper {
+  // make sticky stuff work
+  overflow: auto;
+  height: 100vh;
+  // always show scrollbar area on Firefox for layout consistenty when filtering
+  overflow-y: scroll;
+  // ensure that the first four table columns are always visible, even on small
+  // screens (e.g. 320px or less)
+  font-size: 0.9375rem; // up from default of 14px (if 1rem = 16px)
+  @media (max-width: 26.1875rem) {
+    // ensure smooth transition
+    font-size: 3.58vw;
+  }
+  // smooth/lazy scrolling on iOS
+  -webkit-overflow-scrolling: touch;
+
+  // also used to change table layout when focusing on one event
+}
+
+div.results-classic-thead-background {
+  background-color: theme-color-dark(secondary);
+  position: sticky;
+  z-index: 1;
+  isolation: isolate; /* ensure div is in front of col highlight for webkit */
+  top: 0;
+  height: calc(15em + 3ex);
+}
+
+div.results-classic-header {
+  @extend .text-light;
+  padding: 1em 0 2.25em;
+  margin: 0 auto;
+  user-select: none; // make header text unselectable so that CTRL+A only
+  // selects the table for easy CSV for user
+
+  div.tournament-info {
+    width: 25em;
+    min-height: 9em;
+    margin-bottom: 1em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-top: white 2px solid;
+    border-bottom: white 1px solid;
+    padding: 1em 0.5em;
+    text-align: center;
+
+    h1 {
+      font-size: 1.3em;
+      font-weight: 500;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875em;
+    }
+  }
+
+  div.actions {
+    padding-left: 0.75em;
+
+    a,
+    button {
+      display: inline-block;
+      margin-right: 0.6em;
+      color: inherit;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      width: 1.6em;
+      height: 1.6em;
+
+      svg {
+        vertical-align: middle;
+
+        path {
+          fill: white;
+        }
+      }
+    }
+  }
+
+  p.source {
+    display: none; // only needed when printing
+    padding-left: 0.75em;
+  }
+
+  select.custom-select {
+    display: inline;
+    color: inherit;
+    border-color: inherit;
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg fill="white" fill-opacity="0.54" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M7 10l5 5 5-5z"/%3E%3Cpath d="M0 0h24v24H0z" fill="none"/%3E%3C/svg%3E');
+    margin-left: 0.2em;
+    font-size: 0.9em; // make font size relative by using em instead of rem
+
+    &:hover {
+      -webkit-box-shadow: inset 0 -2px 0 -1px white;
+      box-shadow: inset 0 -2px 0 -1px white;
+    }
+
+    &#event-select {
+      text-overflow: ellipsis;
+      width: 7em;
+    }
+
+    &#sort-select {
+      width: 7em;
+      margin-right: 0.6em;
+    }
+
+    option {
+      // for the select boxes on Windows, which inherit the white text color
+      color: #424242 !important;
+      background-color: white;
+    }
+  }
+}
+
+table.results-classic {
+  table-layout: fixed;
+  width: 1em; // intentionally too small to force a compact table
+  margin: -3ex auto 0.75em;
+
+  // fixed table widths
+  th.number {
+    width: 2.5em;
+  }
+  th.team {
+    width: 18em;
+  }
+  th.rank {
+    width: 4em;
+  }
+  th.total-points {
+    width: 4em;
+  }
+
+  thead {
+    @extend .text-light;
+  }
+
+  th.event-points,
+  th.team-penalties {
+    width: 2em;
+    transform: rotate(-90deg);
+    white-space: nowrap;
+    padding-left: 0.75rem;
+  }
+
+  td.event-points,
+  th.total-points,
+  td.total-points,
+  th.rank,
+  td.rank,
+  td.team-penalties {
+    text-align: center;
+  }
+
+  th.number,
+  th.team,
+  th.event-points-focus,
+  th.rank,
+  th.total-points {
+    vertical-align: baseline;
+  }
+
+  th.number,
+  td.number {
+    text-align: right;
+    padding-right: 0.5em;
+  }
+
+  colgroup.event-columns col.hover {
+    background-color: #eeeeee;
+  }
+
+  td.team span.badge-warning {
+    background-color: #ffe3bf;
+  }
+
+  td.number,
+  td.team {
+    cursor: pointer;
+  }
+
+  td.team {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  // make medals circular (replicate the behavior before div wrapping needed for
+  // Chrome, gosh darn it Chrome)
+  td.rank,
+  td.event-points {
+    padding: 0;
+
+    div {
+      width: 2em;
+      height: 2em;
+      margin: 0 auto;
+      line-height: 2em;
+    }
+  }
+
+  td.rank div {
+    width: 3em;
+  } // wider badge for overall rank
+
+  // event points that are displayed directly next to team, hidden by default
+  th.event-points-focus,
+  td.event-points-focus {
+    width: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  td.event-points-focus {
+    padding-bottom: 0;
+  }
+
+  th:not(.team-penalties) {
+    cursor: pointer;
+  }
+
+  th {
+    position: sticky;
+    z-index: 1;
+    top: 15em;
+  }
+
+  tr {
+    height: 1.75em;
+  }
+
+  th.rank {
+    div {
+      margin-right: 0.4em;
+      text-align: right;
+    }
+  }
+
+  // hacky hotfix for Chrome and related browsers
+  th {
+    z-index: 1;
+  }
+
+  // allow centering of placing text ignoring superscript
+  td.event-points sup,
+  td.event-points-focus sup,
+  td.rank sup {
+    display: inline-block;
+    width: 0px;
+  }
+}
+
+// slightly modified table layout for when focusing on one event
+// JS triggered
+div.results-classic-wrapper.event-focused {
+  // header widths (slightly wider) handled with JS
+
+  table.results-classic {
+    th.event-points-focus {
+      width: 4em;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+
+      div {
+        margin-left: -12em;
+        margin-right: 1em;
+        text-align: right;
+      }
+    }
+
+    td.event-points-focus {
+      padding: 0;
+
+      div {
+        width: 2em;
+        height: 2em;
+        margin: 0 auto;
+        line-height: 2em;
+        text-align: center;
+      }
+    }
+  }
+}
+
+div.results-classic-footnotes {
+  margin: 0 auto;
+
+  div.wrapper {
+    margin: 0 0 1em 0.5em;
+    border-top: 1px solid black;
+    width: 10em;
+    white-space: nowrap;
+
+    p {
+      font-size: 0.9em;
+      padding: 0.5em 0 0 0.5em;
+      margin: 0;
+    }
+  }
+}
+
+summary > * {
+  display: inline-block;
+}
+
+div#team-detail {
+  #team-detail-label {
+    font-weight: 500;
+    margin-bottom: 0;
+    letter-spacing: normal;
+  }
+
+  .team-detail-title {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+
+    #team-title {
+      font-weight: 600;
+      font-size: 1.15rem;
+    }
+
+    small {
+      margin-top: 0.2rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #5f6b7a;
+    }
+  }
+
+  .team-summary-card {
+    background: #f7f9fc;
+    border: 1px solid #dfe5ef;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    padding: 0.75rem;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 36rem;
+
+    .team-summary-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .summary-stat {
+      background: #ffffff;
+      border: 1px solid #e7ebf1;
+      border-radius: 999px;
+      padding: 0.3rem 0.65rem;
+      line-height: 1.2;
+      display: inline-flex;
+      align-items: baseline;
+      column-gap: 0.35rem;
+
+      .label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #5f6b7a;
+      }
+
+      .value {
+        font-weight: 600;
+        display: inline-flex;
+        align-items: baseline;
+        white-space: nowrap;
+
+        .out-of {
+          margin-left: 0.25rem;
+          font-weight: 400;
+          font-size: 0.72rem;
+          color: #6f7b89;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+
+  div.modal-dialog {
+    max-width: 42rem;
+    width: calc(100% - 1rem * 2);
+  }
+
+  .chart-toggle {
+    font-size: 0.857em;
+
+    button {
+      border: none;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      cursor: pointer;
+      color: inherit;
+    }
+    button.selected {
+      font-weight: bold;
+      cursor: default;
+    }
+    button:not(.selected) {
+      text-decoration: underline;
+    }
+  }
+
+  .medal-summary {
+    margin-top: 0.75rem;
+
+    .medal-summary-chart-wrap {
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    #medal-summary-chart {
+      margin: 0.5rem 0 0;
+      height: 13rem;
+
+      .ct-label {
+        font-size: 0.75rem;
+      }
+    }
+
+    .medal-summary-empty {
+      margin-top: 0.5rem;
+      padding: 0.85rem 1rem;
+      border-radius: 0.5rem;
+      background: #f5f7fb;
+      border: 1px solid #dbe2ee;
+      color: #556273;
+      font-size: 0.9rem;
+    }
+  }
+
+  .other-results-link {
+    margin-top: 0.6rem;
+    text-align: center;
+  }
+
+  table {
+    table-layout: fixed;
+    width: 1em;
+
+    border-collapse: separate;
+    border-spacing: 0 0.5ex;
+
+    @include media-breakpoint-down(xs) {
+      font-size: 0.8em;
+    }
+
+    .event {
+      padding-left: 0.5em;
+    }
+
+    th.event {
+      width: 16.5em;
+    }
+    th.points {
+      width: 3em;
+    }
+    th.place {
+      width: 6em;
+    }
+    th.notes {
+      width: 19em;
+    }
+
+    th.points,
+    th.place,
+    td.points,
+    td.place {
+      text-align: center;
+    }
+
+    td {
+      height: 2em;
+      white-space: nowrap;
+    }
+
+    tr[data-toggle="collapse"] {
+      cursor: pointer;
+    }
+
+    :where(tbody.include-histograms tr:nth-of-type(4n + 1)) {
+      background-color: #f5f5f5;
+    }
+    :where(tbody:not(.include-histograms) tr:nth-of-type(2n + 1)) {
+      background-color: #f5f5f5;
+    }
+
+    .ct-chart {
+      margin: 16px 0;
+    }
+
+    .ct-chart-bar .ct-label.ct-horizontal.ct-end {
+      justify-content: start;
+    }
+  }
+}
+
+div#print-instructions {
+  ul {
+    padding-left: 1.5em;
+  }
+
+  p.small {
+    padding-left: 0.75em;
+  }
+}
+
+div#download-info {
+  svg {
+    height: 24px;
+    vertical-align: middle;
+  }
+}
+
+.modal {
+  // smooth/lazy scrolling on iOS
+  -webkit-overflow-scrolling: touch;
+}
+
+div#filters div.modal-body {
+  .superscore-links {
+    margin-top: -1rem;
+    margin-bottom: 1rem;
+    a {
+      @extend .text-dark;
+    }
+  }
+
+  details > div {
+    margin-top: 1rem;
+  }
+
+  div {
+    margin: 1rem 0;
+
+    label {
+      display: inline;
+    }
+
+    input {
+      vertical-align: middle;
+      margin-right: 0.25em;
+    }
+  }
+
+  #state-filter,
+  #team-filter,
+  #event-filter,
+  #track-filter {
+    div:first-child {
+      margin-bottom: 1rem;
+    }
+
+    div {
+      margin: 0.6rem 0;
+    }
+  }
+}
+
+// Chartist styles copied from unosmium/sciolyff-rust
+.ct-series-a .ct-point,
+.ct-series-b .ct-point {
+  stroke: black;
+}
+.ct-series-a .ct-point {
+  stroke-width: 2em;
+  opacity: 0.25;
+}
+.ct-label {
+  color: inherit;
+  font-size: 0.75em;
+}
+
+.ct-bar-label {
+  fill: #263238;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.popover.popover-trial {
+  border: 0;
+  border-radius: 0.6rem;
+  box-shadow: 0 8px 24px rgba(24, 39, 75, 0.16);
+  max-width: 19rem;
+
+  .popover-header {
+    border: 0;
+    background: #1f1b35;
+    color: #f5f5f5;
+    font-weight: 600;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .popover-body {
+    background: #ffffff;
+    color: #374151;
+    line-height: 1.35;
+    padding: 0.65rem 0.75rem 0.75rem;
+  }
+}
+
+.bs-popover-bottom.popover-trial > .arrow::before,
+.bs-popover-auto[x-placement^="bottom"].popover-trial > .arrow::before {
+  border-bottom-color: #1f1b35;
+}
+
+.bs-popover-top.popover-trial > .arrow::before,
+.bs-popover-auto[x-placement^="top"].popover-trial > .arrow::before {
+  border-top-color: #ffffff;
+}
+
+@media print {
+  html {
+    // attempt to get backgrounds to print
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  // all following until note of custom print styling just revert page back to
+  // printable state, kept separate for clarity
+
+  .announcement {
+    display: none !important;
+  }
+
+  .badge {
+    background-color: transparent !important;
+    color: black !important;
+    border: 1px solid black !important;
+    border-radius: 2px !important;
+  }
+
+  div.results-classic-wrapper {
+    overflow: visible;
+    height: auto;
+  }
+
+  div.results-classic-thead-background {
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    position: static;
+
+    div.results-classic-header {
+      color: rgba(0, 0, 0, 0.87) !important;
+    }
+  }
+
+  div.results-classic-header {
+    div.tournament-info {
+      border-top: black 2px solid;
+      border-bottom: black 1px solid;
+    }
+
+    div.actions {
+      display: none;
+    }
+
+    p.source {
+      display: block;
+    }
+  }
+
+  table.results-classic {
+    tr {
+      height: auto;
+
+      td div {
+        line-height: normal !important;
+        height: auto !important;
+        background-color: transparent !important;
+      }
+    }
+
+    th,
+    thead {
+      color: rgba(0, 0, 0, 0.87);
+      position: static;
+    }
+
+    thead {
+      display: table-row-group;
+    }
+
+    colgroup.event-columns col.hover {
+      background-color: transparent;
+    }
+
+    // override .table-hover
+    tbody tr {
+      @include hover {
+        background-color: inherit;
+      }
+    }
+  }
+
+  .modal,
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  // custom print styling starts here
+
+  table.results-classic {
+    line-height: 1.35; // make Nats results (up to 60 teams) fit on one page
+
+    tbody {
+      tr:nth-child(6n-5),
+      tr:nth-child(6n-4),
+      tr:nth-child(6n-3) {
+        background-color: #e0e0e0;
+
+        td.rank {
+          background-color: #aaaaaa;
+        }
+
+        td.team-penalties {
+          background-color: #ffff00;
+
+          &[data-points="0"] {
+            color: #ffff00 !important; // hide text if no penalty
+          }
+        }
+      }
+
+      tr:nth-child(6n-2),
+      tr:nth-child(6n-1),
+      tr:nth-child(6n) {
+        td.team-penalties {
+          background-color: #ffff8d;
+
+          &[data-points="0"] {
+            color: transparent !important; // hide text if no penalty
+          }
+        }
+      }
+
+      td.total-points,
+      td.rank {
+        font-weight: 450;
+        border-left: 1px solid black;
+      }
+    }
+
+    colgroup {
+      &.event-columns col:nth-child(3n-2) {
+        border-left: 1px solid black;
+      }
+    }
+  }
+}
