@@ -32,6 +32,7 @@ const optionInputs = {
   date: document.getElementById("toggle-date"),
   division: document.getElementById("toggle-division"),
   level: document.getElementById("toggle-level"),
+  suffix: document.getElementById("toggle-suffix"),
 };
 const teamNameMaxInput = document.getElementById("team-name-max");
 const highlightCountInput = document.getElementById("highlight-count-max");
@@ -592,7 +593,10 @@ function render() {
       teamCell.className = "team";
       const teamMeta = buildTeamMeta(team);
       const star = state.options.advanced && team.earnedBid ? " ✧" : "";
-      const fullTeamName = buildTeamName(team);
+      let fullTeamName = buildTeamName(team);
+      if (state.options.suffix && team.suffix) {
+        fullTeamName += ` ${team.suffix}`;
+      }
       const visibleTeamName = truncateName(fullTeamName, state.options.teamNameMax);
       const teamNameClass = state.options.advanced && team.earnedBid ? "team-name is-advancing" : "team-name";
       teamCell.innerHTML = `
