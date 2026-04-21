@@ -1,3 +1,137 @@
+// --- Duosmium GitHub Tournament Search ---
+const DUOSMIUM_API_URL = 'https://api.github.com/repos/Duosmium/duosmium/contents/data/results';
+const DUOSMIUM_RAW_URL = 'https://raw.githubusercontent.com/Duosmium/duosmium/main/data/results/';
+
+const duosmiumSearchInput = document.getElementById('duosmium-tournament-search');
+const duosmiumYearMinInput = document.getElementById('duosmium-year-min');
+const duosmiumYearMaxInput = document.getElementById('duosmium-year-max');
+const duosmiumLoadBtn = document.getElementById('duosmium-load-btn');
+const duosmiumResultsDiv = document.getElementById('duosmium-search-results');
+
+let duosmiumFileList = [];
+let duosmiumFiltered = [];
+let duosmiumSelected = new Set();
+
+async function fetchDuosmiumFileList() {
+  if (duosmiumFileList.length) return duosmiumFileList;
+  duosmiumResultsDiv.textContent = 'Loading tournament list from GitHub...';
+  try {
+    const res = await fetch(DUOSMIUM_API_URL);
+    if (!res.ok) throw new Error('Failed to fetch tournament list');
+    const files = await res.json();
+    duosmiumFileList = files.filter(f => f.name.endsWith('.yaml'));
+    return duosmiumFileList;
+  } catch (e) {
+    duosmiumResultsDiv.textContent = 'Error loading tournament list.';
+    return [];
+  }
+}
+
+function parseYearFromFilename(name) {
+  const match = name.match(/(19|20)\d{2}/);
+  return match ? parseInt(match[0], 10) : null;
+}
+
+function parseTournamentNameFromDuosmium(name) {
+  // Remove year, division, extension, underscores
+  return name.replace(/(19|20)\d{2}/, '')
+    .replace(/_div[bc]/i, '')
+    .replace(/\.yaml$/, '')
+    .replace(/_/g, ' ')
+    .trim();
+}
+
+function filterDuosmiumFiles() {
+  const query = (duosmiumSearchInput.value || '').toLowerCase();
+  const yearMin = parseInt(duosmiumYearMinInput.value, 10) || 2000;
+  const yearMax = parseInt(duosmiumYearMaxInput.value, 10) || 2100;
+  duosmiumFiltered = duosmiumFileList.filter(f => {
+    const year = parseYearFromFilename(f.name);
+    if (!year || year < yearMin || year > yearMax) return false;
+    const tname = parseTournamentNameFromDuosmium(f.name).toLowerCase();
+    return !query || tname.includes(query);
+  });
+  renderDuosmiumResults();
+}
+
+function renderDuosmiumResults() {
+  if (!duosmiumFiltered.length) {
+    duosmiumResultsDiv.innerHTML = '<em>No tournaments found for search.</em>';
+    return;
+  }
+  duosmiumResultsDiv.innerHTML = duosmiumFiltered.map(f => {
+    const year = parseYearFromFilename(f.name);
+    const tname = parseTournamentNameFromDuosmium(f.name);
+    const checked = duosmiumSelected.has(f.name) ? 'checked' : '';
+    return `<label style="display:block;margin-bottom:2px;"><input type="checkbox" data-fname="${f.name}" ${checked}/> ${tname} <span style="color:#888">(${year})</span></label>`;
+  }).join('');
+  // Add event listeners for checkboxes
+  duosmiumResultsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const fname = cb.getAttribute('data-fname');
+      if (cb.checked) duosmiumSelected.add(fname);
+      else duosmiumSelected.delete(fname);
+    });
+  });
+}
+
+async function handleDuosmiumSearchInput() {
+  await fetchDuosmiumFileList();
+  filterDuosmiumFiles();
+}
+
+async function handleDuosmiumLoadBtn() {
+  if (!duosmiumSelected.size) {
+    statusText.textContent = 'Select at least one tournament.';
+    return;
+  }
+  statusText.textContent = 'Loading tournaments from GitHub...';
+  const parser = await loadSciolyFF();
+  const filesToLoad = Array.from(duosmiumSelected);
+  const loaded = await Promise.all(filesToLoad.map(async fname => {
+    try {
+      const url = DUOSMIUM_RAW_URL + fname;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch ' + fname);
+      const text = await res.text();
+      const tournament = new parser.Interpreter(text);
+      return { fileName: fname, tournament: tournament.tournament };
+    } catch (e) {
+      return { fileName: fname, error: e instanceof Error ? e.message : String(e) };
+    }
+  }));
+  const successes = loaded.filter(e => !e.error);
+  const errors = loaded.filter(e => e.error);
+  // Avoid duplicate filenames
+  const existingNames = new Set(state.files.map(e => e.fileName));
+  successes.forEach(entry => {
+    if (!existingNames.has(entry.fileName)) {
+      state.files.push(entry);
+      existingNames.add(entry.fileName);
+    }
+  });
+  if (!state.files.length) {
+    renderError(errors.map(e => `${e.fileName}: ${e.error}`).join('\n'));
+    statusText.textContent = 'Parsing failed';
+    if (fileListEl) fileListEl.innerHTML = '';
+    return;
+  }
+  if (errors.length) {
+    statusText.textContent = `${state.files.length} loaded, ${errors.length} failed`;
+    console.warn('Some tournaments failed to load', errors);
+  }
+  render();
+}
+
+if (duosmiumSearchInput && duosmiumYearMinInput && duosmiumYearMaxInput && duosmiumLoadBtn && duosmiumResultsDiv) {
+  duosmiumSearchInput.addEventListener('input', handleDuosmiumSearchInput);
+  duosmiumYearMinInput.addEventListener('input', handleDuosmiumSearchInput);
+  duosmiumYearMaxInput.addEventListener('input', handleDuosmiumSearchInput);
+  duosmiumLoadBtn.addEventListener('click', handleDuosmiumLoadBtn);
+  // Initial load
+  fetchDuosmiumFileList().then(() => filterDuosmiumFiles());
+}
+
 const state = {
   files: [],
   options: {

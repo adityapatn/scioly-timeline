@@ -16,6 +16,22 @@
         <span class="dropzone-subtitle">or drag files here</span>
       </label>
 
+      <section id="duosmium-search-section" class="duosmium-search-section">
+        <div class="section-heading">
+          <h2>Search Duosmium Tournament Database</h2>
+          <p>Find and load tournaments directly from the Duosmium GitHub database (no upload needed).</p>
+        </div>
+        <div class="duosmium-search-controls">
+          <input id="duosmium-tournament-search" type="text" placeholder="Search tournament name..." autocomplete="off" />
+          <label for="duosmium-year-min">Year range:</label>
+          <input id="duosmium-year-min" type="number" min="2000" max="2100" value="2015" style="width:5em;" />
+          <span>to</span>
+          <input id="duosmium-year-max" type="number" min="2000" max="2100" value="2026" style="width:5em;" />
+          <button id="duosmium-load-btn" type="button">Load Selected Tournaments</button>
+        </div>
+        <div id="duosmium-search-results" class="duosmium-search-results"></div>
+      </section>
+
       <div class="upload-meta">
         <div>
           <span class="meta-label">Loaded files</span>
