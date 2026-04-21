@@ -122,10 +122,117 @@ function formatDate(value) {
   return Number.isNaN(date.getTime()) ? String(value) : dateFormatter.format(date);
 }
 
-function tournamentLabel(tournament) {
+function formatFilenameToken(token) {
+  if (!token) {
+    return "";
+  }
+
+  if (/^[a-z]{2,3}$/i.test(token)) {
+    return token.toUpperCase();
+  }
+
+  if (/^[ivxlcdm]+$/i.test(token)) {
+    return token.toUpperCase();
+  }
+
+  return token.charAt(0).toUpperCase() + token.slice(1).toLowerCase();
+}
+
+function parseTournamentNameFromFileName(fileName) {
+  const cleaned = String(fileName || "").replace(/\.[^.]+$/, "");
+  const tokens = cleaned.split("_").filter(Boolean);
+  if (!tokens.length) {
+    return "";
+  }
+
+  const typeMap = {
+    reg: "Reg",
+    regional: "Reg",
+    regionals: "Reg",
+    state: "State",
+    states: "State",
+    invi: "Invi",
+    invite: "Invi",
+    invites: "Invi",
+    invitational: "Invi",
+    invitationals: "Invi",
+  };
+
+  const firstTokenYear = tokens[0].match(/^(19|20)\d{2}/);
+  const year = firstTokenYear?.[0] ?? tokens.find((token) => /^(19|20)\d{2}$/.test(token)) ?? "";
+  const startIndex = firstTokenYear ? 1 : 0;
+
+  const typeIndex = tokens.findIndex((token, index) => {
+    return index >= startIndex && Boolean(typeMap[token.toLowerCase()]);
+  });
+
+  const divisionIndex = tokens.findIndex((token, index) => {
+    if (index < startIndex) {
+      return false;
+    }
+    return /^[bc]$/i.test(token) || /^div[bc]$/i.test(token);
+  });
+
+  const endCandidates = [typeIndex, divisionIndex].filter((index) => index >= 0);
+  const nameEnd = endCandidates.length ? Math.min(...endCandidates) : tokens.length;
+  const nameTokens = tokens.slice(startIndex, nameEnd).map(formatFilenameToken).filter(Boolean);
+
+  const typeLabel = typeIndex >= 0 ? typeMap[tokens[typeIndex].toLowerCase()] : "";
+  let division = "";
+  if (divisionIndex >= 0) {
+    const divisionToken = tokens[divisionIndex].toLowerCase();
+    division = divisionToken.startsWith("div") ? divisionToken.slice(-1).toUpperCase() : divisionToken.toUpperCase();
+  }
+
+  const parts = [];
+  if (nameTokens.length) {
+    parts.push(nameTokens.join(" "));
+  }
+  if (typeLabel) {
+    parts.push(typeLabel);
+  }
+  if (division) {
+    parts.push(`Div ${division}`);
+  }
+  if (year) {
+    parts.push(year);
+  }
+
+  return parts.join(" ");
+}
+
+function formatTournamentLevel(level) {
+  if (!level) {
+    return "";
+  }
+
+  const normalized = String(level).trim().toLowerCase();
+  const levelMap = {
+    reg: "Reg",
+    regional: "Reg",
+    regionals: "Reg",
+    state: "State",
+    states: "State",
+    invi: "Invi",
+    invite: "Invi",
+    invites: "Invi",
+    invitational: "Invi",
+    invitationals: "Invi",
+  };
+
+  if (levelMap[normalized]) {
+    return levelMap[normalized];
+  }
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function tournamentLabel(entry) {
+  const tournament = entry.tournament;
   return (
     tournament.name ||
     tournament.shortName ||
+    parseTournamentNameFromFileName(entry.fileName) ||
     "Unnamed Tournament"
   );
 }
@@ -189,23 +296,19 @@ function buildTournamentMeta(tournament) {
   const lines = [];
 
   if (state.options.location) {
-    lines.push(`Location: ${tournament.location || "—"}`);
+    lines.push(`${tournament.location || "—"}`);
   }
 
   if (state.options.date) {
-    lines.push(`Date: ${formatDate(dateValue)}`);
+    lines.push(`${formatDate(dateValue)}`);
   }
 
   if (state.options.division) {
-    lines.push(tournament.division ? `Division: ${tournament.division}` : "Division: —");
+    lines.push(tournament.division ? `Division ${tournament.division}` : "Division: —");
   }
 
   if (state.options.level) {
-    lines.push(tournament.level ? `Level: ${tournament.level}` : "Level: —");
-  }
-
-  if (!lines.length) {
-    lines.push("No tournament metadata selected");
+    lines.push(tournament.level ? `${formatTournamentLevel(tournament.level)} Level` : "Level: —");
   }
 
   return lines;
@@ -383,7 +486,7 @@ function render() {
       .map((line) => `<span>${escapeHtml(line)}</span>`)
       .join("");
     th.innerHTML = `
-      <div class="tournament-title">${escapeHtml(tournamentLabel(entry.tournament))}</div>
+      <div class="tournament-title">${escapeHtml(tournamentLabel(entry))}</div>
       <div class="tournament-meta">${metaLines}</div>
     `;
     titleRow.appendChild(th);
@@ -437,9 +540,10 @@ function render() {
       const star = state.options.advanced && team.earnedBid ? " ✧" : "";
       const fullTeamName = buildTeamName(team);
       const visibleTeamName = truncateName(fullTeamName, state.options.teamNameMax);
+      const teamNameClass = team.earnedBid ? "team-name is-advancing" : "team-name";
       teamCell.innerHTML = `
         <span class="team-primary">
-          <span class="team-name" title="${escapeHtml(fullTeamName)}">${escapeHtml(visibleTeamName + star)}</span>
+          <span class="${teamNameClass}" title="${escapeHtml(fullTeamName)}">${escapeHtml(visibleTeamName + star)}</span>
         </span>
         ${teamMeta ? `<span class="team-meta">${escapeHtml(teamMeta)}</span>` : ""}
       `;

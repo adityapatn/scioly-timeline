@@ -151,6 +151,17 @@ p {
   font-size: 0.92rem;
 }
 
+.options-group + .options-group {
+  margin-top: 14px;
+}
+
+.options-group-title {
+  margin: 0 0 8px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .control-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -269,6 +280,7 @@ table.results-classic td.total-points {
 }
 table.results-classic td.rank div,
 table.results-classic td.total-points div {
+  font-weight: 400;
   width: 2.8em;
   height: 2em;
   margin: 0 auto;
@@ -351,8 +363,13 @@ table.results-classic.combined-results tr.column-header-row th {
 }
 
 .team-name {
-  font-weight: 500;
+  font-weight: 400;
   white-space: nowrap;
+}
+
+.team-name.is-advancing {
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .team-meta {
