@@ -236,7 +236,7 @@ function handleExportButtonClick(event) {
 
 async function copyTableAsPNG() {
   console.info("[export] copy routine started");
-  const exportTarget = tableRoot.querySelector(".combined-wrapper");
+  const exportTarget = tableRoot.querySelector("table.combined-results");
   if (!exportTarget) {
     console.warn("[export] No rendered table available to copy");
     statusText.textContent = "Upload files first";
@@ -244,8 +244,8 @@ async function copyTableAsPNG() {
   }
 
   const exportButton = document.getElementById("export-button");
-  const width = Math.ceil(exportTarget.getBoundingClientRect().width);
-  const height = Math.ceil(exportTarget.getBoundingClientRect().height);
+  const width = Math.ceil(exportTarget.scrollWidth);
+  const height = Math.ceil(exportTarget.scrollHeight);
 
   console.info("[export] target located", { width, height });
 
@@ -265,8 +265,8 @@ async function copyTableAsPNG() {
       logging: false,
       width,
       height,
-      windowWidth: document.documentElement.scrollWidth,
-      windowHeight: document.documentElement.scrollHeight,
+      windowWidth: width,
+      windowHeight: height,
     });
 
     console.info("[export] canvas rendered", { width: canvas.width, height: canvas.height });
