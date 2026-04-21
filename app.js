@@ -815,9 +815,88 @@ function init() {
   } else {
     console.error("[app] download button element missing at init");
   }
+  
+    const downloadSVGButton = document.getElementById("download-svg-button");
+    if (downloadSVGButton) {
+      downloadSVGButton.addEventListener("click", (event) => {
+        console.info("[download-svg] direct click listener fired");
+        handleDownloadSVGButtonClick(event);
+      });
+    } else {
+      console.error("[app] download SVG button element missing at init");
+    }
 
   console.info("[app] initialized copy-to-clipboard button listener");
   render();
+function handleDownloadSVGButtonClick(event) {
+  console.info("[download-svg] click handler fired");
+  event.preventDefault();
+  downloadTableAsSVG().catch((error) => {
+    console.error("[download-svg] failure:", error);
+    statusText.textContent = "SVG download failed";
+    alert("Failed to download table SVG: " + (error instanceof Error ? error.message : String(error)));
+  });
+}
+
+async function downloadTableAsSVG() {
+  console.info("[download-svg] routine started");
+  const exportTarget = tableRoot.querySelector("table.combined-results");
+  if (!exportTarget) {
+    console.warn("[download-svg] No rendered table available to download");
+    statusText.textContent = "Upload files first";
+    return;
+  }
+
+  const downloadSVGButton = document.getElementById("download-svg-button");
+  try {
+    downloadSVGButton.disabled = true;
+    downloadSVGButton.textContent = "Downloading...";
+    statusText.textContent = "Preparing SVG download...";
+
+    // Clone the table and inline computed styles
+    const clone = exportTarget.cloneNode(true);
+    inlineAllStyles(exportTarget, clone);
+
+    // Wrap in SVG foreignObject
+    const bbox = exportTarget.getBoundingClientRect();
+    const width = Math.ceil(bbox.width);
+    const height = Math.ceil(bbox.height);
+    const serializer = new XMLSerializer();
+    const html = serializer.serializeToString(clone);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%">${html}</foreignObject></svg>`;
+
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "scioly-table.svg";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+    statusText.textContent = "SVG downloaded";
+    downloadSVGButton.disabled = false;
+    downloadSVGButton.textContent = "Download Table as SVG";
+  } catch (error) {
+    console.error("[download-svg] routine failed:", error);
+    statusText.textContent = "SVG download failed";
+    alert("Failed to download table SVG: " + (error instanceof Error ? error.message : String(error)));
+    downloadSVGButton.disabled = false;
+    downloadSVGButton.textContent = "Download Table as SVG";
+  }
+}
+
+// Recursively copy computed styles from src to dest
+function inlineAllStyles(src, dest) {
+  if (!(src instanceof Element) || !(dest instanceof Element)) return;
+  const computed = window.getComputedStyle(src);
+  dest.setAttribute("style", computed.cssText);
+  Array.from(src.children).forEach((child, i) => {
+    inlineAllStyles(child, dest.children[i]);
+  });
+}
 }
 
 init();
