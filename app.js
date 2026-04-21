@@ -379,6 +379,16 @@ function handleExportButtonClick(event) {
   });
 }
 
+function handleDownloadButtonClick(event) {
+  console.info("[download] click handler fired");
+  event.preventDefault();
+  downloadTableAsPNG().catch((error) => {
+    console.error("[download] failure:", error);
+    statusText.textContent = "Download failed";
+    alert("Failed to download table image: " + (error instanceof Error ? error.message : String(error)));
+  });
+}
+
 async function copyTableAsPNG() {
   console.info("[export] copy routine started");
   const exportTarget = tableRoot.querySelector("table.combined-results");
@@ -449,6 +459,72 @@ async function copyTableAsPNG() {
     exportButton.disabled = false;
     exportButton.textContent = "Copy Table as PNG";
     console.info("[export] copy routine finished");
+  }
+}
+
+async function downloadTableAsPNG() {
+  console.info("[download] routine started");
+  const exportTarget = tableRoot.querySelector("table.combined-results");
+  if (!exportTarget) {
+    console.warn("[download] No rendered table available to download");
+    statusText.textContent = "Upload files first";
+    return;
+  }
+
+  const downloadButton = document.getElementById("download-button");
+  const width = Math.ceil(exportTarget.scrollWidth);
+  const height = Math.ceil(exportTarget.scrollHeight);
+
+  try {
+    downloadButton.disabled = true;
+    downloadButton.textContent = "Downloading...";
+    statusText.textContent = "Preparing PNG download...";
+
+    const html2canvas = await loadHtml2Canvas();
+    console.info("[download] html2canvas loaded");
+
+    const canvas = await html2canvas(exportTarget, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      width,
+      height,
+      windowWidth: width,
+      windowHeight: height,
+    });
+
+    console.info("[download] canvas rendered", { width: canvas.width, height: canvas.height });
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        statusText.textContent = "Download failed";
+        alert("Failed to create PNG blob");
+        downloadButton.disabled = false;
+        downloadButton.textContent = "Download Table as PNG";
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "scioly-table.png";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      statusText.textContent = "PNG downloaded";
+      downloadButton.disabled = false;
+      downloadButton.textContent = "Download Table as PNG";
+    }, "image/png");
+  } catch (error) {
+    console.error("[download] routine failed:", error);
+    statusText.textContent = "Download failed";
+    alert("Failed to download table image: " + (error instanceof Error ? error.message : String(error)));
+    downloadButton.disabled = false;
+    downloadButton.textContent = "Download Table as PNG";
   }
 }
 
@@ -728,6 +804,16 @@ function init() {
     });
   } else {
     console.error("[app] export button element missing at init");
+  }
+
+  const downloadButton = document.getElementById("download-button");
+  if (downloadButton) {
+    downloadButton.addEventListener("click", (event) => {
+      console.info("[download] direct click listener fired");
+      handleDownloadButtonClick(event);
+    });
+  } else {
+    console.error("[app] download button element missing at init");
   }
 
   console.info("[app] initialized copy-to-clipboard button listener");

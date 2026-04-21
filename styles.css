@@ -464,13 +464,14 @@ table.results-classic.combined-results tr.column-header-row th {
 
 .export-section {
   margin-top: 16px;
-  padding: 14px 16px;
+  padding: 5px 16px;
   display: flex;
   justify-content: center;
 }
 
 .export-button {
   padding: 10px 20px;
+  margin: 10px;
   background-color: var(--secondary);
   color: #fff;
   border: none;
