@@ -13,6 +13,8 @@ const state = {
     level: true,
     teamNameMax: 28,
     teamsShown: 20,
+    medals: false,
+    medalCountMax: 3,
   },
 };
 
@@ -33,7 +35,9 @@ const optionInputs = {
   division: document.getElementById("toggle-division"),
   level: document.getElementById("toggle-level"),
   suffix: document.getElementById("toggle-suffix"),
+  medals: document.getElementById("toggle-medals"),
 };
+const medalCountMaxInput = document.getElementById("medal-count-max");
 const teamNameMaxInput = document.getElementById("team-name-max");
 const highlightCountInput = document.getElementById("highlight-count-max");
 const teamsShownInput = document.getElementById("teams-shown-max");
@@ -105,8 +109,8 @@ function updateOptionState() {
   document.documentElement.style.setProperty("--team-name-max-ch", String(state.options.teamNameMax));
 
   state.options.highlightCount = parseBoundedNumberFromInput(highlightCountInput);
-
   state.options.teamsShown = parseBoundedNumberFromInput(teamsShownInput);
+  state.options.medalCountMax = parseBoundedNumberFromInput(medalCountMaxInput);
 }
 
 function bindControls() {
@@ -128,6 +132,11 @@ function bindControls() {
   });
 
   teamsShownInput.addEventListener("input", () => {
+    updateOptionState();
+    render();
+  });
+
+  medalCountMaxInput.addEventListener("input", () => {
     updateOptionState();
     render();
   });
@@ -611,7 +620,7 @@ function render() {
   const titleRow = document.createElement("tr");
   sortedEntries.forEach((entry) => {
     const th = document.createElement("th");
-    th.colSpan = 3;
+    th.colSpan = 3 + (state.options.medals ? state.options.medalCountMax : 0);
     th.className = "tournament-group-header";
     const metaLines = buildTournamentMeta(entry.tournament)
       .map((line) => `<span>${escapeHtml(line)}</span>`)
@@ -626,7 +635,7 @@ function render() {
 
   const columnRow = document.createElement("tr");
   columnRow.className = "column-header-row";
-  sortedEntries.forEach(() => {
+  sortedEntries.forEach((_entry, entryIdx) => {
     const teamHeader = document.createElement("th");
     teamHeader.className = "team";
     teamHeader.textContent = "Team Name";
@@ -642,6 +651,27 @@ function render() {
     columnRow.appendChild(teamHeader);
     columnRow.appendChild(rankHeader);
     columnRow.appendChild(pointsHeader);
+
+    // Medal columns for this tournament (now after points)
+    if (state.options.medals) {
+      for (let i = 1; i <= state.options.medalCountMax; i++) {
+        const medalHeader = document.createElement("th");
+        medalHeader.className = `medal-col medal-col-${i}` + (i === 1 ? " medal-col-first" : "");
+        let label = `${i}th medals`;
+        if (i === 1) label = "1sts";
+        else if (i === 2) label = "2nds";
+        else if (i === 3) label = "3rds";
+        else if (i === 4) label = "4ths";
+        else if (i === 5) label = "5ths";
+        else if (i === 6) label = "6ths";
+        else if (i === 7) label = "7ths";
+        else if (i === 8) label = "8ths";
+        else if (i === 9) label = "9ths";
+        else if (i === 10) label = "10ths";
+        medalHeader.textContent = label;
+        columnRow.appendChild(medalHeader);
+      }
+    }
   });
   thead.appendChild(columnRow);
 
@@ -649,32 +679,21 @@ function render() {
   for (let rowIndex = 0; rowIndex < state.options.teamsShown; rowIndex += 1) {
     const tr = document.createElement("tr");
 
-    sortedEntries.forEach((entry) => {
+    sortedEntries.forEach((entry, entryIdx) => {
       const teams = sortTournamentTeams((entry.tournament.teams ?? []).slice()).slice(0, state.options.teamsShown);
       const team = teams[rowIndex];
 
-      if (!team) {
-        ["team", "rank", "total-points"].forEach((className) => {
-          const emptyCell = document.createElement("td");
-          emptyCell.className = `${className} empty-row`;
-          emptyCell.textContent = "—";
-          tr.appendChild(emptyCell);
-        });
-        return;
-      }
-
-      const rank = Number.isFinite(Number(team.rank)) ? Number(team.rank) : rowIndex + 1;
-
+      // Team columns for this tournament
       const teamCell = document.createElement("td");
       teamCell.className = "team";
       const teamMeta = buildTeamMeta(team);
-      const star = state.options.advanced && team.earnedBid ? " ✧" : "";
-      let fullTeamName = buildTeamName(team);
-      if (state.options.suffix && team.suffix) {
+      const star = state.options.advanced && team && team.earnedBid ? " ✧" : "";
+      let fullTeamName = team ? buildTeamName(team) : "";
+      if (state.options.suffix && team && team.suffix) {
         fullTeamName += ` ${team.suffix}`;
       }
       const visibleTeamName = truncateName(fullTeamName, state.options.teamNameMax);
-      const teamNameClass = state.options.advanced && team.earnedBid ? "team-name is-advancing" : "team-name";
+      const teamNameClass = team && state.options.advanced && team.earnedBid ? "team-name is-advancing" : "team-name";
       teamCell.innerHTML = `
         <span class="team-primary">
           <span class="${teamNameClass}" title="${escapeHtml(fullTeamName)}">${escapeHtml(visibleTeamName + star)}</span>
@@ -684,6 +703,7 @@ function render() {
 
       const rankCell = document.createElement("td");
       rankCell.className = "rank";
+      const rank = team && Number.isFinite(Number(team.rank)) ? Number(team.rank) : rowIndex + 1;
       if (state.options.top3 && rank >= 1 && rank <= state.options.highlightCount) {
         rankCell.setAttribute("data-trophy", String(rank));
       }
@@ -691,11 +711,36 @@ function render() {
 
       const pointsCell = document.createElement("td");
       pointsCell.className = "total-points";
-      pointsCell.innerHTML = `<div>${escapeHtml(String(team.points ?? "—"))}</div>`;
+      pointsCell.innerHTML = `<div>${escapeHtml(String(team && team.points != null ? team.points : "—"))}</div>`;
 
       tr.appendChild(teamCell);
       tr.appendChild(rankCell);
       tr.appendChild(pointsCell);
+
+      // Medal columns for this tournament (now after points)
+      if (state.options.medals) {
+        const medalCounts = Array(state.options.medalCountMax).fill(0);
+        if (team && Array.isArray(team.placings)) {
+          for (const placing of team.placings) {
+            if (
+              placing &&
+              typeof placing.place === "number" &&
+              placing.place >= 1 &&
+              placing.place <= state.options.medalCountMax &&
+              !placing.ex &&
+              !placing.dq
+            ) {
+              medalCounts[placing.place - 1]++;
+            }
+          }
+        }
+        for (let i = 0; i < state.options.medalCountMax; i++) {
+          const medalCell = document.createElement("td");
+          medalCell.className = `medal-col medal-col-${i + 1}` + (i === 0 ? " medal-col-first" : "");
+          medalCell.textContent = String(medalCounts[i]);
+          tr.appendChild(medalCell);
+        }
+      }
     });
 
     tbody.appendChild(tr);

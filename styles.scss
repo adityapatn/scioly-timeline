@@ -2,6 +2,18 @@
 @use "sass:map";
 @use "./duosmium-main/assets/variables" as duo;
 
+// Medal columns: add spacing and divider to first medal column in each group
+.medal-col-first {
+  border-left: none !important;
+  padding-left: 0.7em !important;
+}
+
+.medal-col {
+  text-align: center;
+  min-width: 2.8em;
+  padding: 0.45rem 0.5rem;
+}
+
 :root {
   --bg: #f2f2ef;
   --card: #ffffff;

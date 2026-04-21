@@ -1,3 +1,14 @@
+.medal-col-first {
+  border-left: none !important;
+  padding-left: 0.7em !important;
+}
+
+.medal-col {
+  text-align: center;
+  min-width: 2.8em;
+  padding: 0.45rem 0.5rem;
+}
+
 :root {
   --bg: #f2f2ef;
   --card: #ffffff;
