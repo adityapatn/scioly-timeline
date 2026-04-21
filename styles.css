@@ -1,3 +1,25 @@
+:root {
+  --bg: #f2f2ef;
+  --card: #ffffff;
+  --border: #dadad5;
+  --text: #111111;
+  --muted: #5c5c57;
+  --primary: #1976d2;
+  --secondary: #15658c;
+  --top-1: #fff176;
+  --top-2: #e0e0e0;
+  --top-3: #bcaaa4;
+  --top-4: #ffecb3;
+  --top-5: #c5e1a5;
+  --top-6: #e1bee7;
+  --top-7: #ffe0b2
+  --top-8: #b2ebf2;
+  --top-9: #f8bbd0;
+  --top-10: #d1c4e9;
+  --team-name-max-ch: 28;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
 .medal-col-first {
   border-left: none !important;
   padding-left: 0.7em !important;
@@ -7,28 +29,6 @@
   text-align: center;
   min-width: 2.8em;
   padding: 0.45rem 0.5rem;
-}
-
-:root {
-  --bg: #f2f2ef;
-  --card: #ffffff;
-  --border: #dadad5;
-  --text: #111111;
-  --muted: #5c5c57;
-  --primary: #1f1b35;
-  --secondary: #15658c;
-  --top-1: #fff176;
-  --top-2: #e0e0e0;
-  --top-3: #bcaaa4;
-  --top-4: #ffecb3;
-  --top-5: #c5e1a5;
-  --top-6: #e1bee7;
-  --top-7: #ffe0b2;
-  --top-8: #b2ebf2;
-  --top-9: #f8bbd0;
-  --top-10: #d1c4e9;
-  --team-name-max-ch: 28;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -317,7 +317,7 @@ table.results-classic th.total-points {
 }
 table.results-classic thead {
   color: #fff;
-  background-color: rgb(18.9, 90.9, 126);
+  background-color: #15658c;
 }
 table.results-classic th.rank,
 table.results-classic td.rank,

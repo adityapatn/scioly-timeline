@@ -1,6 +1,25 @@
-@use "sass:color";
-@use "sass:map";
-@use "./duosmium-main/assets/variables" as duo;
+// Duosmium color variables (formerly from duosmium-main/assets/variables)
+:root {
+  --bg: #f2f2ef;
+  --card: #ffffff;
+  --border: #dadad5;
+  --text: #111111;
+  --muted: #5c5c57;
+  --primary: #1976d2;
+  --secondary: #15658c;
+  --top-1: #fff176;
+  --top-2: #e0e0e0;
+  --top-3: #bcaaa4;
+  --top-4: #ffecb3;
+  --top-5: #c5e1a5;
+  --top-6: #e1bee7;
+  --top-7: #ffe0b2
+  --top-8: #b2ebf2;
+  --top-9: #f8bbd0;
+  --top-10: #d1c4e9;
+  --team-name-max-ch: 28;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
 
 // Medal columns: add spacing and divider to first medal column in each group
 .medal-col-first {
@@ -14,27 +33,7 @@
   padding: 0.45rem 0.5rem;
 }
 
-:root {
-  --bg: #f2f2ef;
-  --card: #ffffff;
-  --border: #dadad5;
-  --text: #111111;
-  --muted: #5c5c57;
-  --primary: #{map.get(duo.$primary, color)};
-  --secondary: #{map.get(duo.$secondary, color)};
-  --top-1: #fff176;
-  --top-2: #e0e0e0;
-  --top-3: #bcaaa4;
-  --top-4: #ffecb3;
-  --top-5: #c5e1a5;
-  --top-6: #e1bee7;
-  --top-7: #ffe0b2;
-  --top-8: #b2ebf2;
-  --top-9: #f8bbd0;
-  --top-10: #d1c4e9;
-  --team-name-max-ch: 28;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-}
+// ...existing code...
 
 * {
   box-sizing: border-box;
@@ -326,8 +325,8 @@ table.results-classic {
   }
 
   thead {
-    color: #fff;
-    background-color: color.scale(map.get(duo.$secondary, color), $lightness: -10%);
+     color: #fff;
+     background-color: #15658c;
   }
 
   th.rank,
