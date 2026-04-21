@@ -7,6 +7,7 @@ const duosmiumYearMinInput = document.getElementById('duosmium-year-min');
 const duosmiumYearMaxInput = document.getElementById('duosmium-year-max');
 const duosmiumLoadBtn = document.getElementById('duosmium-load-btn');
 const duosmiumResultsDiv = document.getElementById('duosmium-search-results');
+const duosmiumResultsPerPageInput = document.getElementById('duosmium-results-per-page');
 
 let duosmiumFileList = [];
 let duosmiumFiltered = [];
@@ -62,19 +63,22 @@ function filterDuosmiumFiles() {
 
 function renderDuosmiumResults() {
   const total = duosmiumFiltered.length;
-  const totalPages = Math.max(1, Math.ceil(total / DUOSMIUM_PAGE_SIZE));
+  const pageSize = duosmiumResultsPerPageInput ? parseBoundedNumberFromInput(duosmiumResultsPerPageInput) : DUOSMIUM_PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (duosmiumPage > totalPages) duosmiumPage = totalPages;
   if (duosmiumPage < 1) duosmiumPage = 1;
-  const startIdx = (duosmiumPage - 1) * DUOSMIUM_PAGE_SIZE;
-  const endIdx = startIdx + DUOSMIUM_PAGE_SIZE;
+  const startIdx = (duosmiumPage - 1) * pageSize;
+  const endIdx = startIdx + pageSize;
   const pageItems = duosmiumFiltered.slice(startIdx, endIdx);
   let html = '';
   if (!duosmiumFiltered.length) {
     html = '<em>No tournaments found for search.</em>';
   } else {
     html = pageItems.map(f => {
-      const checked = duosmiumSelected.has(f.name) ? 'checked' : '';
-      return `<label style="display:block;margin-bottom:2px;"><input type="checkbox" data-fname="${f.name}" ${checked}/> ${f.name}</label>`;
+      const isChecked = duosmiumSelected.has(f.name);
+      const checkedAttr = isChecked ? 'checked' : '';
+      const selectedClass = isChecked ? ' is-selected' : '';
+      return `<label class="duosmium-result${selectedClass}" data-fname-label="${f.name}"><input type="checkbox" data-fname="${f.name}" ${checkedAttr}/> ${f.name}</label>`;
     }).join('');
   }
   // Pagination controls
@@ -90,6 +94,8 @@ function renderDuosmiumResults() {
       const fname = cb.getAttribute('data-fname');
       if (cb.checked) duosmiumSelected.add(fname);
       else duosmiumSelected.delete(fname);
+      // Re-render results so the label gets updated `.is-selected` class
+      renderDuosmiumResults();
     });
   });
   // Pagination button listeners
@@ -109,48 +115,75 @@ async function handleDuosmiumLoadBtn() {
     statusText.textContent = 'Select at least one tournament.';
     return;
   }
+
   statusText.textContent = 'Loading tournaments from GitHub...';
   const parser = await loadSciolyFF();
   const filesToLoad = Array.from(duosmiumSelected);
-  const loaded = await Promise.all(filesToLoad.map(async fname => {
+
+  const loaded = await Promise.all(filesToLoad.map(async (fname) => {
     try {
       const url = DUOSMIUM_RAW_URL + fname;
       const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to fetch ' + fname);
+      if (!res.ok) throw new Error('Failed to fetch ' + fname + ' (' + res.status + ')');
       const text = await res.text();
-      const tournament = new parser.Interpreter(text);
-      return { fileName: fname, tournament: tournament.tournament };
+      const interpreter = new parser.Interpreter(text);
+      const tournamentObj = interpreter && interpreter.tournament ? interpreter.tournament : null;
+      if (!tournamentObj) {
+        return { fileName: fname, error: 'Parsed file did not contain a tournament object' };
+      }
+      return { fileName: fname, tournament: tournamentObj };
     } catch (e) {
       return { fileName: fname, error: e instanceof Error ? e.message : String(e) };
     }
   }));
-  const successes = loaded.filter(e => !e.error);
-  const errors = loaded.filter(e => e.error);
-  // Avoid duplicate filenames
-  const existingNames = new Set(state.files.map(e => e.fileName));
-  successes.forEach(entry => {
+
+  const successes = loaded.filter((e) => !e.error);
+  const errors = loaded.filter((e) => e.error);
+
+  // Merge successful loads into state.files, avoiding duplicates
+  const existingNames = new Set(state.files.map((e) => e.fileName));
+  let added = 0;
+  successes.forEach((entry) => {
     if (!existingNames.has(entry.fileName)) {
       state.files.push(entry);
       existingNames.add(entry.fileName);
+      added += 1;
     }
   });
+
   if (!state.files.length) {
-    renderError(errors.map(e => `${e.fileName}: ${e.error}`).join('\n'));
+    renderError(errors.map((e) => `${e.fileName}: ${e.error}`).join('\n'));
     statusText.textContent = 'Parsing failed';
     if (fileListEl) fileListEl.innerHTML = '';
     return;
   }
+
+  // Update status and render the UI
   if (errors.length) {
-    statusText.textContent = `${state.files.length} loaded, ${errors.length} failed`;
+    statusText.textContent = `${added} new loaded, ${errors.length} failed`;
     console.warn('Some tournaments failed to load', errors);
+  } else {
+    statusText.textContent = `${added} new loaded`;
   }
+
+  // Re-render uploaded files and tournament tables
   render();
+
+  // Refresh the duosmium results list to reflect current selection state
+  renderDuosmiumResults();
 }
 
 if (duosmiumSearchInput && duosmiumYearMinInput && duosmiumYearMaxInput && duosmiumLoadBtn && duosmiumResultsDiv) {
   duosmiumSearchInput.addEventListener('input', handleDuosmiumSearchInput);
   duosmiumYearMinInput.addEventListener('input', handleDuosmiumSearchInput);
   duosmiumYearMaxInput.addEventListener('input', handleDuosmiumSearchInput);
+  if (duosmiumResultsPerPageInput) {
+    duosmiumResultsPerPageInput.addEventListener('input', () => {
+      // Keep page in range and re-render when page size changes
+      duosmiumPage = 1;
+      filterDuosmiumFiles();
+    });
+  }
   duosmiumLoadBtn.addEventListener('click', handleDuosmiumLoadBtn);
   // Initial load
   fetchDuosmiumFileList().then(() => filterDuosmiumFiles());
@@ -759,12 +792,21 @@ function render() {
     updateExportButtonState(false);
     return;
   }
+  // Keep the uploaded-files list but only render entries that contain a valid tournament object.
+  const validEntries = state.files.filter((e) => e && e.tournament);
+
+  if (!validEntries.length) {
+    tableRoot.innerHTML = `<div class="card upload-panel"><strong>No valid tournaments to display.</strong></div>`;
+    statusText.textContent = `${state.files.length} file${state.files.length === 1 ? "" : "s"} loaded (no valid tournaments)`;
+    updateExportButtonState(false);
+    return;
+  }
 
   tableRoot.innerHTML = "";
-  statusText.textContent = `${state.files.length} tournament${state.files.length === 1 ? "" : "s"} loaded`;
+  statusText.textContent = `${validEntries.length} tournament${validEntries.length === 1 ? "" : "s"} loaded`;
   updateExportButtonState(true);
 
-  const sortedEntries = [...state.files].sort((left, right) => {
+  const sortedEntries = [...validEntries].sort((left, right) => {
     return getTournamentSortValue(left.tournament) - getTournamentSortValue(right.tournament);
   });
 

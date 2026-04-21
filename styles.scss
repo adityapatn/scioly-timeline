@@ -13,7 +13,7 @@
   --top-4: #ffecb3;
   --top-5: #c5e1a5;
   --top-6: #e1bee7;
-  --top-7: #ffe0b2
+  --top-7: #ffe0b2;
   --top-8: #b2ebf2;
   --top-9: #f8bbd0;
   --top-10: #d1c4e9;
@@ -33,7 +33,35 @@
   padding: 0.45rem 0.5rem;
 }
 
-// ...existing code...
+#duosmium-tournament-search {
+  width: 300px;
+}
+
+/* Layout for Duosmium search controls: space and align inputs/buttons */
+.duosmium-search-controls {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+/* Duosmium search results list styling */
+#duosmium-search-results {
+  margin-top: 8px;
+}
+
+#duosmium-search-results .duosmium-result {
+  display: block;
+  margin-bottom: 6px;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+/* Highlight selected tournaments using --top-8 */
+#duosmium-search-results .duosmium-result.is-selected {
+  background-color: var(--top-8);
+  color: #000;
+}
 
 * {
   box-sizing: border-box;
@@ -258,7 +286,7 @@ p {
   justify-content: space-between;
 }
 
-.control-grid .text-input-label input {
+input {
   width: 6.2em;
   border: 1px solid #d6d6d0;
   border-radius: 8px;
@@ -517,7 +545,7 @@ table.results-classic.combined-results {
   justify-content: center;
 }
 
-.export-button {
+button {
   padding: 10px 20px;
   margin: 10px;
   background-color: var(--secondary);
