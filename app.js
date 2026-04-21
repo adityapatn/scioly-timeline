@@ -70,7 +70,7 @@ async function loadHtml2Canvas() {
 }
 
 function parseBoundedNumberFromInput(input) {
-  const parsed = Number.parseInt(input.value, 10);
+  const raw = input.value;
   const min = Number.parseInt(input.min, 10);
   const max = Number.parseInt(input.max, 10);
   const fallback = Number.parseInt(input.defaultValue || input.getAttribute("value") || "0", 10);
@@ -81,6 +81,12 @@ function parseBoundedNumberFromInput(input) {
     ? Math.min(boundedMax, Math.max(boundedMin, fallback))
     : 0;
 
+  // If the field is currently empty (user is mid-edit), don't clobber their input.
+  if (raw === "") {
+    return boundedFallback;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
   const normalized = Number.isFinite(parsed)
     ? Math.min(boundedMax, Math.max(boundedMin, parsed))
     : boundedFallback;
