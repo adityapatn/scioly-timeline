@@ -1,5 +1,5 @@
 // --- Duosmium GitHub Tournament Search ---
-const DUOSMIUM_API_URL = 'https://api.github.com/repos/Duosmium/duosmium/contents/data/results';
+const DUOSMIUM_TREE_API_URL = 'https://api.github.com/repos/Duosmium/duosmium/git/trees/main?recursive=1';
 const DUOSMIUM_RAW_URL = 'https://raw.githubusercontent.com/Duosmium/duosmium/main/data/results/';
 
 const duosmiumSearchInput = document.getElementById('duosmium-tournament-search');
@@ -11,15 +11,20 @@ const duosmiumResultsDiv = document.getElementById('duosmium-search-results');
 let duosmiumFileList = [];
 let duosmiumFiltered = [];
 let duosmiumSelected = new Set();
+let duosmiumPage = 1;
+const DUOSMIUM_PAGE_SIZE = 20;
 
 async function fetchDuosmiumFileList() {
   if (duosmiumFileList.length) return duosmiumFileList;
   duosmiumResultsDiv.textContent = 'Loading tournament list from GitHub...';
   try {
-    const res = await fetch(DUOSMIUM_API_URL);
+    const res = await fetch(DUOSMIUM_TREE_API_URL);
     if (!res.ok) throw new Error('Failed to fetch tournament list');
-    const files = await res.json();
-    duosmiumFileList = files.filter(f => f.name.endsWith('.yaml'));
+    const data = await res.json();
+    // tree: [{ path, type, ... }]
+    duosmiumFileList = (data.tree || [])
+      .filter(item => item.path.startsWith('data/results/') && item.path.endsWith('.yaml'))
+      .map(item => ({ name: item.path.replace('data/results/', '') }));
     return duosmiumFileList;
   } catch (e) {
     duosmiumResultsDiv.textContent = 'Error loading tournament list.';
@@ -51,20 +56,34 @@ function filterDuosmiumFiles() {
     const tname = parseTournamentNameFromDuosmium(f.name).toLowerCase();
     return !query || tname.includes(query);
   });
+  duosmiumPage = 1;
   renderDuosmiumResults();
 }
 
 function renderDuosmiumResults() {
+  const total = duosmiumFiltered.length;
+  const totalPages = Math.max(1, Math.ceil(total / DUOSMIUM_PAGE_SIZE));
+  if (duosmiumPage > totalPages) duosmiumPage = totalPages;
+  if (duosmiumPage < 1) duosmiumPage = 1;
+  const startIdx = (duosmiumPage - 1) * DUOSMIUM_PAGE_SIZE;
+  const endIdx = startIdx + DUOSMIUM_PAGE_SIZE;
+  const pageItems = duosmiumFiltered.slice(startIdx, endIdx);
+  let html = '';
   if (!duosmiumFiltered.length) {
-    duosmiumResultsDiv.innerHTML = '<em>No tournaments found for search.</em>';
-    return;
+    html = '<em>No tournaments found for search.</em>';
+  } else {
+    html = pageItems.map(f => {
+      const checked = duosmiumSelected.has(f.name) ? 'checked' : '';
+      return `<label style="display:block;margin-bottom:2px;"><input type="checkbox" data-fname="${f.name}" ${checked}/> ${f.name}</label>`;
+    }).join('');
   }
-  duosmiumResultsDiv.innerHTML = duosmiumFiltered.map(f => {
-    const year = parseYearFromFilename(f.name);
-    const tname = parseTournamentNameFromDuosmium(f.name);
-    const checked = duosmiumSelected.has(f.name) ? 'checked' : '';
-    return `<label style="display:block;margin-bottom:2px;"><input type="checkbox" data-fname="${f.name}" ${checked}/> ${tname} <span style="color:#888">(${year})</span></label>`;
-  }).join('');
+  // Pagination controls
+  html += `<div style="margin-top:8px;display:flex;align-items:center;gap:10px;justify-content:center;">
+    <button id="duosmium-prev-page" type="button" ${duosmiumPage === 1 ? 'disabled' : ''}>&lt; Prev</button>
+    <span>Page <strong>${duosmiumPage}</strong> of <strong>${totalPages}</strong></span>
+    <button id="duosmium-next-page" type="button" ${duosmiumPage === totalPages ? 'disabled' : ''}>Next &gt;</button>
+  </div>`;
+  duosmiumResultsDiv.innerHTML = html;
   // Add event listeners for checkboxes
   duosmiumResultsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', e => {
@@ -73,6 +92,11 @@ function renderDuosmiumResults() {
       else duosmiumSelected.delete(fname);
     });
   });
+  // Pagination button listeners
+  const prevBtn = duosmiumResultsDiv.querySelector('#duosmium-prev-page');
+  const nextBtn = duosmiumResultsDiv.querySelector('#duosmium-next-page');
+  if (prevBtn) prevBtn.addEventListener('click', () => { duosmiumPage--; renderDuosmiumResults(); });
+  if (nextBtn) nextBtn.addEventListener('click', () => { duosmiumPage++; renderDuosmiumResults(); });
 }
 
 async function handleDuosmiumSearchInput() {
