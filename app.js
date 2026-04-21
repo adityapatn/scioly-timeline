@@ -12,6 +12,7 @@ const state = {
     division: true,
     level: true,
     teamNameMax: 28,
+    teamsShown: 20,
   },
 };
 
@@ -34,6 +35,7 @@ const optionInputs = {
 };
 const teamNameMaxInput = document.getElementById("team-name-max");
 const highlightCountInput = document.getElementById("highlight-count-max");
+const teamsShownInput = document.getElementById("teams-shown-max");
 
 console.error("[app] app.js loaded");
 
@@ -67,23 +69,37 @@ async function loadHtml2Canvas() {
   return html2canvasLib;
 }
 
+function parseBoundedNumberFromInput(input) {
+  const parsed = Number.parseInt(input.value, 10);
+  const min = Number.parseInt(input.min, 10);
+  const max = Number.parseInt(input.max, 10);
+  const fallback = Number.parseInt(input.defaultValue || input.getAttribute("value") || "0", 10);
+
+  const boundedMin = Number.isFinite(min) ? min : Number.NEGATIVE_INFINITY;
+  const boundedMax = Number.isFinite(max) ? max : Number.POSITIVE_INFINITY;
+  const boundedFallback = Number.isFinite(fallback)
+    ? Math.min(boundedMax, Math.max(boundedMin, fallback))
+    : 0;
+
+  const normalized = Number.isFinite(parsed)
+    ? Math.min(boundedMax, Math.max(boundedMin, parsed))
+    : boundedFallback;
+
+  input.value = String(normalized);
+  return normalized;
+}
+
 function updateOptionState() {
   Object.entries(optionInputs).forEach(([key, input]) => {
     state.options[key] = input.checked;
   });
 
-  const parsed = Number.parseInt(teamNameMaxInput.value, 10);
-  state.options.teamNameMax = Number.isFinite(parsed)
-    ? Math.min(120, Math.max(8, parsed))
-    : 28;
-  teamNameMaxInput.value = String(state.options.teamNameMax);
+  state.options.teamNameMax = parseBoundedNumberFromInput(teamNameMaxInput);
   document.documentElement.style.setProperty("--team-name-max-ch", String(state.options.teamNameMax));
 
-  const parsedHighlightCount = Number.parseInt(highlightCountInput.value, 10);
-  state.options.highlightCount = Number.isFinite(parsedHighlightCount)
-    ? Math.min(10, Math.max(1, parsedHighlightCount))
-    : 3;
-  highlightCountInput.value = String(state.options.highlightCount);
+  state.options.highlightCount = parseBoundedNumberFromInput(highlightCountInput);
+
+  state.options.teamsShown = parseBoundedNumberFromInput(teamsShownInput);
 }
 
 function bindControls() {
@@ -100,6 +116,11 @@ function bindControls() {
   });
 
   highlightCountInput.addEventListener("input", () => {
+    updateOptionState();
+    render();
+  });
+
+  teamsShownInput.addEventListener("input", () => {
     updateOptionState();
     render();
   });
@@ -516,11 +537,11 @@ function render() {
   thead.appendChild(columnRow);
 
   const tbody = document.createElement("tbody");
-  for (let rowIndex = 0; rowIndex < 20; rowIndex += 1) {
+  for (let rowIndex = 0; rowIndex < state.options.teamsShown; rowIndex += 1) {
     const tr = document.createElement("tr");
 
     sortedEntries.forEach((entry) => {
-      const teams = sortTournamentTeams((entry.tournament.teams ?? []).slice()).slice(0, 20);
+      const teams = sortTournamentTeams((entry.tournament.teams ?? []).slice()).slice(0, state.options.teamsShown);
       const team = teams[rowIndex];
 
       if (!team) {
@@ -541,7 +562,7 @@ function render() {
       const star = state.options.advanced && team.earnedBid ? " ✧" : "";
       const fullTeamName = buildTeamName(team);
       const visibleTeamName = truncateName(fullTeamName, state.options.teamNameMax);
-      const teamNameClass = team.earnedBid ? "team-name is-advancing" : "team-name";
+      const teamNameClass = state.options.advanced && team.earnedBid ? "team-name is-advancing" : "team-name";
       teamCell.innerHTML = `
         <span class="team-primary">
           <span class="${teamNameClass}" title="${escapeHtml(fullTeamName)}">${escapeHtml(visibleTeamName + star)}</span>
