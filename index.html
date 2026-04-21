@@ -32,13 +32,17 @@
         <h2>Display options</h2>
         <p>Show or hide extra information in each tournament table.</p>
       </div>
-
+      
       <div class="control-grid">
         <label><input type="checkbox" id="toggle-city" /> Show team city</label>
         <label><input type="checkbox" id="toggle-state" /> Show team state</label>
         <label><input type="checkbox" id="toggle-number" /> Show team number</label>
-        <label><input type="checkbox" id="toggle-advanced" checked /> Show advancement star</label>
-        <label><input type="checkbox" id="toggle-top3" checked /> Highlight top 3 ranks</label>
+        <label><input type="checkbox" id="toggle-advanced" checked /> Show advancing teams</label>
+        <label><input type="checkbox" id="toggle-top3" checked /> Highlight top ranks</label>
+        <label class="text-input-label" for="highlight-count-max">
+          Number of highlighted ranks
+          <input id="highlight-count-max" type="number" min="1" max="10" step="1" value="3" />
+        </label>
         <label><input type="checkbox" id="toggle-location" checked /> Show tournament location</label>
         <label><input type="checkbox" id="toggle-date" checked /> Show tournament date</label>
         <label><input type="checkbox" id="toggle-division" checked /> Show tournament division</label>

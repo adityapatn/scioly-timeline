@@ -6,6 +6,7 @@ const state = {
     number: false,
     advanced: true,
     top3: true,
+    highlightCount: 3,
     location: true,
     date: true,
     division: true,
@@ -32,6 +33,7 @@ const optionInputs = {
   level: document.getElementById("toggle-level"),
 };
 const teamNameMaxInput = document.getElementById("team-name-max");
+const highlightCountInput = document.getElementById("highlight-count-max");
 
 console.error("[app] app.js loaded");
 
@@ -75,6 +77,12 @@ function updateOptionState() {
     ? Math.min(120, Math.max(8, parsed))
     : 28;
   teamNameMaxInput.value = String(state.options.teamNameMax);
+
+  const parsedHighlightCount = Number.parseInt(highlightCountInput.value, 10);
+  state.options.highlightCount = Number.isFinite(parsedHighlightCount)
+    ? Math.min(10, Math.max(1, parsedHighlightCount))
+    : 3;
+  highlightCountInput.value = String(state.options.highlightCount);
 }
 
 function bindControls() {
@@ -86,6 +94,11 @@ function bindControls() {
   });
 
   teamNameMaxInput.addEventListener("input", () => {
+    updateOptionState();
+    render();
+  });
+
+  highlightCountInput.addEventListener("input", () => {
     updateOptionState();
     render();
   });
@@ -433,7 +446,7 @@ function render() {
 
       const rankCell = document.createElement("td");
       rankCell.className = "rank";
-      if (state.options.top3 && rank >= 1 && rank <= 3) {
+      if (state.options.top3 && rank >= 1 && rank <= state.options.highlightCount) {
         rankCell.setAttribute("data-trophy", String(rank));
       }
       rankCell.innerHTML = `<div>${escapeHtml(String(rank))}</div>`;

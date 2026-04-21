@@ -13,6 +13,13 @@
   --top-1: #fff176;
   --top-2: #e0e0e0;
   --top-3: #bcaaa4;
+  --top-4: #ffecb3;
+  --top-5: #c5e1a5;
+  --top-6: #e1bee7;
+  --top-7: #ffe0b2;
+  --top-8: #b2ebf2;
+  --top-9: #f8bbd0;
+  --top-10: #d1c4e9;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
@@ -302,6 +309,34 @@ table.results-classic {
 
   td.rank[data-trophy="3"] div {
     background-color: var(--top-3);
+  }
+
+  td.rank[data-trophy="4"] div {
+    background-color: var(--top-4);
+  }
+
+  td.rank[data-trophy="5"] div {
+    background-color: var(--top-5);
+  }
+
+  td.rank[data-trophy="6"] div {
+    background-color: var(--top-6);
+  }
+
+  td.rank[data-trophy="7"] div {
+    background-color: var(--top-7);
+  }
+
+  td.rank[data-trophy="8"] div {
+    background-color: var(--top-8);
+  }
+
+  td.rank[data-trophy="9"] div {
+    background-color: var(--top-9);
+  }
+
+  td.rank[data-trophy="10"] div {
+    background-color: var(--top-10);
   }
 }
 
