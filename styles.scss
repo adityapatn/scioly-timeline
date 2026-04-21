@@ -420,6 +420,13 @@ table.results-classic.combined-results {
   min-width: 100%;
   margin: 0;
 
+  /* Draw separators between tournament column groups */
+  th.tournament-group-header + th.tournament-group-header,
+  tr.column-header-row th.team:not(:first-child),
+  tbody td.team:not(:first-child) {
+    border-left: 1px solid #e3e3df;
+  }
+
   th.tournament-group-header {
     text-align: left;
     padding: 0.8rem 0.75rem;
