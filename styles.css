@@ -16,6 +16,7 @@
   --top-8: #b2ebf2;
   --top-9: #f8bbd0;
   --top-10: #d1c4e9;
+  --team-name-max-ch: 28;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
@@ -242,10 +243,10 @@ table.results-classic th.team {
   width: 18em;
 }
 table.results-classic th.rank {
-  width: 4em;
+  width: 3.2em;
 }
 table.results-classic th.total-points {
-  width: 4em;
+  width: 3.6em;
 }
 table.results-classic thead {
   color: #fff;
@@ -263,6 +264,11 @@ table.results-classic th.total-points {
   vertical-align: baseline;
   font-weight: 500;
   padding: 0.55rem 0.65rem;
+}
+table.results-classic th.rank,
+table.results-classic th.total-points {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
 }
 table.results-classic td {
   border-bottom: 1px solid #ecece8;
@@ -339,18 +345,18 @@ table.results-classic.combined-results th.tournament-group-header .tournament-ti
   color: #000;
 }
 table.results-classic.combined-results th.team {
-  width: 14em;
+  width: calc(var(--team-name-max-ch) * 1ch);
 }
 table.results-classic.combined-results td.team {
-  width: 14em;
+  width: calc(var(--team-name-max-ch) * 1ch);
 }
 table.results-classic.combined-results th.rank,
 table.results-classic.combined-results td.rank {
-  width: 4.4em;
+  width: 3.2em;
 }
 table.results-classic.combined-results th.total-points,
 table.results-classic.combined-results td.total-points {
-  width: 6em;
+  width: 4.2em;
 }
 table.results-classic.combined-results tr.column-header-row th {
   background: rgba(255, 255, 255, 0.1);

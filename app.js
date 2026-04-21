@@ -77,6 +77,7 @@ function updateOptionState() {
     ? Math.min(120, Math.max(8, parsed))
     : 28;
   teamNameMaxInput.value = String(state.options.teamNameMax);
+  document.documentElement.style.setProperty("--team-name-max-ch", String(state.options.teamNameMax));
 
   const parsedHighlightCount = Number.parseInt(highlightCountInput.value, 10);
   state.options.highlightCount = Number.isFinite(parsedHighlightCount)

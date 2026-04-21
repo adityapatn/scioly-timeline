@@ -20,6 +20,7 @@
   --top-8: #b2ebf2;
   --top-9: #f8bbd0;
   --top-10: #d1c4e9;
+  --team-name-max-ch: 28;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
@@ -249,11 +250,11 @@ table.results-classic {
   }
 
   th.rank {
-    width: 4em;
+    width: 3.2em;
   }
 
   th.total-points {
-    width: 4em;
+    width: 3.6em;
   }
 
   thead {
@@ -274,6 +275,12 @@ table.results-classic {
     vertical-align: baseline;
     font-weight: 500;
     padding: 0.55rem 0.65rem;
+  }
+
+  th.rank,
+  th.total-points {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
   }
 
   td {
@@ -368,21 +375,21 @@ table.results-classic.combined-results {
   }
 
   th.team {
-    width: 14em;
+    width: calc(var(--team-name-max-ch) * 1ch);
   }
 
   td.team {
-    width: 14em;
+    width: calc(var(--team-name-max-ch) * 1ch);
   }
 
   th.rank,
   td.rank {
-    width: 4.4em;
+    width: 3.2em;
   }
 
   th.total-points,
   td.total-points {
-    width: 6em;
+    width: 4.2em;
   }
 
   tr.column-header-row th {
