@@ -31,3 +31,33 @@ Notes:
 - Keep the local server running while you test.
 - Keep the Sass watcher running if you are editing `styles.scss`.
 - If you edit the page, hard refresh the browser so it reloads the updated module.
+
+# Publishing on GitHub Pages
+
+To publish this website so others can access it:
+
+1. **Push your code to a public GitHub repository.**
+   - Example: `https://github.com/yourusername/scioly-timeline`
+
+2. **Enable GitHub Pages:**
+   - Go to your repository on GitHub.
+   - Click **Settings** → **Pages** in the left sidebar.
+   - Under "Build and deployment", set **Source** to `Deploy from a branch`.
+   - Select the branch (usually `main` or `master`) and the root (`/`) folder.
+   - Click **Save**.
+
+3. **Wait for deployment.**
+   - GitHub will build and deploy your site. The URL will be shown at the top of the Pages settings (e.g., `https://yourusername.github.io/scioly-timeline/`).
+
+4. **Make sure your site is accessible:**
+   - Visit the URL shown in the Pages settings.
+   - If you see your app, it is public and accessible to anyone with the link.
+
+**Additional Notes:**
+- Make sure your `index.html` and all assets (`app.js`, `styles.css`, etc.) are in the repository root (or the folder you selected for Pages).
+- If you use custom domains, configure them in the Pages settings.
+- If you use CDN imports (like esm.sh), no extra configuration is needed.
+- If you use client-side routing, you may need a `404.html` that redirects to `index.html`.
+- For best results, always build your CSS (`npm run build:css`) before pushing.
+- It may take a few minutes for changes to appear after pushing.
+- If you see a 404 or blank page, check that your files are in the correct branch/folder and that the build completed.

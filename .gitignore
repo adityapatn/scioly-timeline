@@ -1,0 +1,25 @@
+# Ignore node_modules and dependency artifacts
+node_modules/
+
+# Ignore build outputs
+styles.css
+styles.css.map
+
+# Ignore OS and editor files
+.DS_Store
+
+# Ignore cache and temp files
+.cache/
+*.log
+
+# Ignore Python HTTP server artifacts
+__pycache__/
+
+# Ignore local test output
+*.local
+
+# Ignore VS Code settings
+.vscode/
+
+#Ignore reference Duosmium source code
+duosmium-main/
