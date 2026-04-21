@@ -19,7 +19,7 @@ const state = {
 const fileInput = document.getElementById("file-input");
 const dropzone = document.getElementById("dropzone");
 const tableRoot = document.getElementById("tables");
-const fileCount = document.getElementById("file-count");
+const fileListEl = document.getElementById("file-list");
 const statusText = document.getElementById("status-text");
 
 const optionInputs = {
@@ -481,7 +481,33 @@ function sortTournamentTeams(teams) {
 }
 
 function render() {
-  fileCount.textContent = String(state.files.length);
+  // Render uploaded filenames (unique) instead of a simple count
+  if (fileListEl) {
+    fileListEl.innerHTML = "";
+    const uniqueNames = [...new Set(state.files.map((e) => e.fileName))];
+    uniqueNames.forEach((name) => {
+      const li = document.createElement("li");
+      li.className = "uploaded-file";
+
+      const span = document.createElement("span");
+      span.className = "uploaded-file-name";
+      span.textContent = name;
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "remove-file";
+      btn.setAttribute("aria-label", `Remove ${name}`);
+      btn.textContent = "✕";
+      btn.addEventListener("click", () => {
+        state.files = state.files.filter((entry) => entry.fileName !== name);
+        render();
+      });
+
+      li.appendChild(span);
+      li.appendChild(btn);
+      fileListEl.appendChild(li);
+    });
+  }
 
   if (!state.files.length) {
     tableRoot.innerHTML = `<div class="card upload-panel"><strong>Load one or more SciolyFF .yaml files to see tournament tables.</strong></div>`;
@@ -627,13 +653,22 @@ async function handleFiles(fileList) {
       }
     }));
 
-    state.files = parsed.filter((entry) => !entry.error);
+    const successes = parsed.filter((entry) => !entry.error);
     const errors = parsed.filter((entry) => entry.error);
+
+    // Merge new successful parses into existing state.files, avoiding duplicate filenames
+    const existingNames = new Set(state.files.map((e) => e.fileName));
+    successes.forEach((entry) => {
+      if (!existingNames.has(entry.fileName)) {
+        state.files.push(entry);
+        existingNames.add(entry.fileName);
+      }
+    });
 
     if (!state.files.length) {
       renderError(errors.map((entry) => `${entry.fileName}: ${entry.error}`).join("\n"));
       statusText.textContent = "Parsing failed";
-      fileCount.textContent = "0";
+      if (fileListEl) fileListEl.innerHTML = "";
       return;
     }
 
