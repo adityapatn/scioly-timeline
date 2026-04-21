@@ -1,0 +1,54 @@
+@import "./variables";
+@import "./custom";
+
+// @import "~daemonite-material/assets/scss/material";
+// Below is a partial import of the above to save on asset size
+
+@import "~daemonite-material/assets/scss/colors";
+@import "~daemonite-material/assets/scss/functions";
+@import "~daemonite-material/assets/scss/mixins";
+@import "~daemonite-material/assets/scss/variables";
+@import "~daemonite-material/assets/scss/utilities";
+
+@import "~daemonite-material/assets/scss/base/base";
+@import "~daemonite-material/assets/scss/base/grid";
+@import "~daemonite-material/assets/scss/base/typography";
+
+@import "~daemonite-material/assets/scss/bootstrap/badge";
+@import "~daemonite-material/assets/scss/bootstrap/close";
+@import "~daemonite-material/assets/scss/bootstrap/jumbotron";
+@import "~daemonite-material/assets/scss/bootstrap/popover";
+@import "~daemonite-material/assets/scss/bootstrap/transition";
+
+@import "~daemonite-material/assets/scss/material/button";
+@import "~daemonite-material/assets/scss/material/button-flat";
+@import "~daemonite-material/assets/scss/material/button-float";
+@import "~daemonite-material/assets/scss/material/card";
+@import "~daemonite-material/assets/scss/material/data-table";
+@import "~daemonite-material/assets/scss/material/dialog";
+@import "~daemonite-material/assets/scss/material/selection-control";
+@import "~daemonite-material/assets/scss/material/snackbar";
+@import "~daemonite-material/assets/scss/material/text-field";
+@import "~daemonite-material/assets/scss/material/text-field-floating-label";
+
+$ct-series-colors: (
+  #15658c,
+  #59922b,
+  #453d3f,
+  #0544d3,
+  #6b0392,
+  #f05b4f,
+  #dda458,
+  #eacf7d,
+  #86797d,
+  #b2c326,
+  #6188e2,
+  #a748ca,
+  #d70206,
+  #f4c63d,
+  #d17905
+);
+@import "~chartist/dist/scss/chartist";
+.ct-axis-title {
+  font-size: 0.75rem;
+}
