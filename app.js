@@ -33,6 +33,8 @@ const optionInputs = {
 };
 const teamNameMaxInput = document.getElementById("team-name-max");
 
+console.error("[app] app.js loaded");
+
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   month: "short",
@@ -49,6 +51,18 @@ async function loadSciolyFF() {
   const module = await import("https://esm.sh/sciolyff@0.19.1?bundle");
   SciolyFF = module.default ?? module;
   return SciolyFF;
+}
+
+let html2canvasLib;
+
+async function loadHtml2Canvas() {
+  if (html2canvasLib) {
+    return html2canvasLib;
+  }
+
+  const module = await import("https://esm.sh/html2canvas@1.4.1?bundle");
+  html2canvasLib = module.default ?? module;
+  return html2canvasLib;
 }
 
 function updateOptionState() {
@@ -194,7 +208,103 @@ function escapeHtml(value) {
 }
 
 function renderError(message) {
+  console.error("[app] renderError:", message);
   tableRoot.innerHTML = `<div class="card upload-panel status-error">${escapeHtml(message)}</div>`;
+}
+
+function updateExportButtonState(isEnabled) {
+  const exportButton = document.getElementById("export-button");
+  if (!exportButton) {
+    return;
+  }
+
+  exportButton.disabled = !isEnabled;
+  exportButton.title = isEnabled
+    ? "Copy the current table as a PNG image"
+    : "Upload files first to enable copying";
+}
+
+function handleExportButtonClick(event) {
+  console.info("[export] click handler fired");
+  event.preventDefault();
+  copyTableAsPNG().catch((error) => {
+    console.error("[export] copy failure:", error);
+    statusText.textContent = "Copy failed";
+    alert("Failed to copy table image: " + (error instanceof Error ? error.message : String(error)));
+  });
+}
+
+async function copyTableAsPNG() {
+  console.info("[export] copy routine started");
+  const exportTarget = tableRoot.querySelector(".combined-wrapper");
+  if (!exportTarget) {
+    console.warn("[export] No rendered table available to copy");
+    statusText.textContent = "Upload files first";
+    return;
+  }
+
+  const exportButton = document.getElementById("export-button");
+  const width = Math.ceil(exportTarget.getBoundingClientRect().width);
+  const height = Math.ceil(exportTarget.getBoundingClientRect().height);
+
+  console.info("[export] target located", { width, height });
+
+  try {
+    exportButton.disabled = true;
+    exportButton.textContent = "Copying...";
+    statusText.textContent = "Copying PNG to clipboard...";
+
+    const html2canvas = await loadHtml2Canvas();
+    console.info("[export] html2canvas loaded");
+
+    const canvas = await html2canvas(exportTarget, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      width,
+      height,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+    });
+
+    console.info("[export] canvas rendered", { width: canvas.width, height: canvas.height });
+
+    const pngBlob = await new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Failed to create PNG blob"));
+          return;
+        }
+
+        resolve(blob);
+      }, "image/png");
+    });
+
+    console.info("[export] png blob ready", { type: pngBlob.type, size: pngBlob.size });
+
+    if (!navigator.clipboard || typeof window.ClipboardItem === "undefined") {
+      throw new Error("Clipboard image copy is not supported in this browser");
+    }
+
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        "image/png": pngBlob,
+      }),
+    ]);
+
+    statusText.textContent = "PNG copied to clipboard";
+    console.info("[export] PNG copied to clipboard");
+  } catch (error) {
+    console.error("[export] copy routine failed:", error);
+    statusText.textContent = "Copy failed";
+    alert("Failed to copy table image: " + (error instanceof Error ? error.message : String(error)));
+  } finally {
+    exportButton.disabled = false;
+    exportButton.textContent = "Copy Table as PNG";
+    console.info("[export] copy routine finished");
+  }
 }
 
 function getTournamentSortValue(tournament) {
@@ -232,11 +342,13 @@ function render() {
   if (!state.files.length) {
     tableRoot.innerHTML = `<div class="card upload-panel"><strong>Load one or more SciolyFF .yaml files to see tournament tables.</strong></div>`;
     statusText.textContent = "Waiting for upload";
+    updateExportButtonState(false);
     return;
   }
 
   tableRoot.innerHTML = "";
   statusText.textContent = `${state.files.length} tournament${state.files.length === 1 ? "" : "s"} loaded`;
+  updateExportButtonState(true);
 
   const sortedEntries = [...state.files].sort((left, right) => {
     return getTournamentSortValue(left.tournament) - getTournamentSortValue(right.tournament);
@@ -410,14 +522,31 @@ function bindDropzone() {
 }
 
 function init() {
+  console.info("[app] init() starting");
   bindControls();
   bindDropzone();
   updateOptionState();
+
+  console.info("[app] DOM lookup", {
+    exportButtonExists: Boolean(document.getElementById("export-button")),
+    exportSectionExists: Boolean(document.getElementById("export-section")),
+  });
 
   fileInput.addEventListener("change", () => {
     handleFiles(fileInput.files).catch((error) => renderError(String(error)));
   });
 
+  const exportButton = document.getElementById("export-button");
+  if (exportButton) {
+    exportButton.addEventListener("click", (event) => {
+      console.info("[export] direct click listener fired");
+      handleExportButtonClick(event);
+    });
+  } else {
+    console.error("[app] export button element missing at init");
+  }
+
+  console.info("[app] initialized copy-to-clipboard button listener");
   render();
 }
 

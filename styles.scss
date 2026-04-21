@@ -95,7 +95,7 @@ p {
   display: block;
   margin-top: 6px;
   color: var(--muted);
-  font-size: 0.92rem;
+  display: flex; // Change display to flex to keep the export section visible
 }
 
 .upload-meta {
@@ -374,6 +374,41 @@ table.results-classic.combined-results {
   background: #fff0f0;
   border: 1px solid #f0c8c8;
   border-radius: 12px;
+}
+
+.export-section {
+  margin-top: 16px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.export-button {
+  padding: 10px 20px;
+  background-color: var(--secondary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
 }
 
 @media (max-width: 1024px) {

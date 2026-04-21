@@ -21,8 +21,9 @@
 7. Click the upload area and choose one or more SciolyFF `.yaml` files.
 8. Confirm that each file appears as its own tournament table with 20 rows.
 9. Use the checkboxes to toggle the extra information shown in the table.
-10. To test drag-and-drop, drag the same `.yaml` files onto the upload area.
-11. If nothing loads, open the browser DevTools console and check for parser or network errors.
+10. Click the "Export Table as JPEG" button to download the table as a JPEG image.
+11. To test drag-and-drop, drag the same `.yaml` files onto the upload area.
+12. If nothing loads, open the browser DevTools console and check for parser or network errors.
 
 Notes:
 
