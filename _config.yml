@@ -1,0 +1,3 @@
+exclude:
+ - duosmium-main
+  - node_modules
