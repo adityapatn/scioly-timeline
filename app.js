@@ -14,6 +14,9 @@ let duosmiumFiltered = [];
 let duosmiumSelected = new Set();
 let duosmiumPage = 1;
 const DUOSMIUM_PAGE_SIZE = 20;
+// Drag-select state
+let duosmiumDragActive = false;
+let duosmiumDragModeSelect = true; // true = selecting, false = deselecting
 
 async function fetchDuosmiumFileList() {
   if (duosmiumFileList.length) return duosmiumFileList;
@@ -88,15 +91,57 @@ function renderDuosmiumResults() {
     <button id="duosmium-next-page" type="button" ${duosmiumPage === totalPages ? 'disabled' : ''}>Next &gt;</button>
   </div>`;
   duosmiumResultsDiv.innerHTML = html;
-  // Add event listeners for checkboxes
-  duosmiumResultsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', e => {
+  // Add event listeners for checkboxes and drag-select behavior
+  duosmiumResultsDiv.querySelectorAll('.duosmium-result').forEach(label => {
+    const cb = label.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+
+    // regular change handler (for click/tap)
+    cb.addEventListener('change', () => {
       const fname = cb.getAttribute('data-fname');
       if (cb.checked) duosmiumSelected.add(fname);
       else duosmiumSelected.delete(fname);
-      // Re-render results so the label gets updated `.is-selected` class
+      // Update label class immediately
+      label.classList.toggle('is-selected', cb.checked);
+      // Re-render to ensure pagination and other state stay consistent
       renderDuosmiumResults();
     });
+
+    // start drag on mousedown: decide whether we're selecting or deselecting
+    label.addEventListener('mousedown', (ev) => {
+      // Only primary button
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      const fname = cb.getAttribute('data-fname');
+      const initiallyChecked = cb.checked;
+      // If clicked file was unselected, drag should select; otherwise drag should deselect
+      duosmiumDragModeSelect = !initiallyChecked;
+      duosmiumDragActive = true;
+
+      // Apply action immediately to the clicked item
+      cb.checked = duosmiumDragModeSelect;
+      if (cb.checked) duosmiumSelected.add(fname);
+      else duosmiumSelected.delete(fname);
+      label.classList.toggle('is-selected', cb.checked);
+    });
+
+    // While dragging, apply selection mode when entering labels
+    label.addEventListener('mouseenter', () => {
+      if (!duosmiumDragActive) return;
+      const fname = cb.getAttribute('data-fname');
+      cb.checked = duosmiumDragModeSelect;
+      if (cb.checked) duosmiumSelected.add(fname);
+      else duosmiumSelected.delete(fname);
+      label.classList.toggle('is-selected', cb.checked);
+    });
+  });
+
+  // End drag on mouseup anywhere
+  document.addEventListener('mouseup', () => {
+    if (!duosmiumDragActive) return;
+    duosmiumDragActive = false;
+    // Re-render to normalize UI (updates classes and pagination)
+    renderDuosmiumResults();
   });
   // Pagination button listeners
   const prevBtn = duosmiumResultsDiv.querySelector('#duosmium-prev-page');
