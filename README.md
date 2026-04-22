@@ -4,11 +4,11 @@
 
 ## Overview
 
-This website allows users to upload multiple SciolyFF YAML files (Science Olympiad tournament results) and generates a combined, interactive table for comparison and analysis.
+This website allows users to upload multiple SciolyFF YAML files (Science Olympiad tournament results) and generates a combined table with customized formatting for comparison and analysis.
 
 ## Features
 
-- **Multi-tournament Upload:** Upload several SciolyFF YAML files at once.
+- **Multi-Tournament Upload:** Upload several SciolyFF YAML files at once.
 - **Dynamic Table Rendering:** View all tournaments side-by-side in a single, scrollable table.
 - **Medal Counts:** Optionally display per-team medal counts for each tournament.
 - **Customizable Columns:** Toggle columns for city, state, team number, suffix, medal counts, and more.
@@ -18,7 +18,7 @@ This website allows users to upload multiple SciolyFF YAML files (Science Olympi
 
 ## Usage
 
-1. Go to the [live site](https://adityavs1.github.io/scioly-timeline/).
+1. Go to the [website](https://adityavs1.github.io/scioly-timeline/).
 2. Drag and drop or select one or more SciolyFF YAML files.
 3. Use the controls to customize the table view.
 4. Export or download the table as needed.
@@ -29,7 +29,3 @@ This website allows users to upload multiple SciolyFF YAML files (Science Olympi
 - SCSS for styling (compiled to CSS)
 - [sciolyff](https://github.com/cxong/sciolyff) for parsing YAML
 - [html2canvas](https://html2canvas.hertzen.com/) for image export
-
-## License
-
-MIT License. See LICENSE for details.
