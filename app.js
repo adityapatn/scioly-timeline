@@ -60,6 +60,14 @@ function filterDuosmiumFiles() {
     const tname = parseTournamentNameFromDuosmium(f.name).toLowerCase();
     return !query || tname.includes(query);
   });
+  // Deselect any filenames that are no longer visible in the filtered results
+  const visibleNames = new Set(duosmiumFiltered.map(f => f.name));
+  for (const name of Array.from(duosmiumSelected)) {
+    if (!visibleNames.has(name)) {
+      duosmiumSelected.delete(name);
+    }
+  }
+
   duosmiumPage = 1;
   renderDuosmiumResults();
 }
